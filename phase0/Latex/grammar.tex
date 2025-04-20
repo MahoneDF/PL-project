@@ -1,0 +1,56 @@
+\documentclass{article}
+
+
+\begin{document}
+\title{CNF Grammar of our language}
+\author{Mobin Razavi, Ali Ahmadvand, Mohammad Davoodabadi}
+\date{}
+\maketitle
+\begin{enumerate}
+    \item program $\rightarrow$ declaration-list
+    \item declaration-list $\rightarrow$ declaration-list   declaration $|$ declaration
+    \item declaration $\rightarrow$ var-declaration $|$ fun-declaration
+    \item var-declaration $\rightarrow$ type-spec ID; $|$ type-spec ID [NUM];
+    \item type-spec $\rightarrow$ int $|$ float $|$ string
+    \item fun-declaration $\rightarrow$ type-spec ID (params) compound-stmnt
+    \item params $\rightarrow$ param-list $|$ $\epsilon$ 
+    \item param-list $\rightarrow$ param-list, param $|$ param
+    \item param $\rightarrow$ type-spec ID $|$ type-spec ID [ ]
+    \item compound-stmnt $\rightarrow$ $\{$local-dec stmnt-list$\}$
+    \item local-dec $\rightarrow$ local-dec var-declaration $|$ $\epsilon$
+    \item stmnt-list $\rightarrow$ stmnt-list stmnt $|$ $\epsilon$
+    \item stmnt $\rightarrow$ compound-stmnt $|$ cond-stmnt $|$ iter-stmnt $|$ return-stmnt $|$ expression-stmnt
+    \item compound-stmnt $\rightarrow$ if (expression) stmnt  $|$ if (expression) stmnt else stmnt
+    \item iter-stmnt $\rightarrow$ while (expression) stmnt
+    \item return-stmnt $\rightarrow$ return; $|$ return expression;
+    \item expression-stmnt $\rightarrow$ expression; $|$ ;
+    \item expression $\rightarrow$ var = expression $|$ simple-expression
+    \item var $\rightarrow$ ID $|$ ID [expression]
+    \item simple-expression $\rightarrow$ logical-expression rel-op logical-expression $|$ logical-expression
+    \item rel-op $\rightarrow$ $>$ $|$ $<$ $|$ $>=$ $|$ $<=$ $|$ $==$ $|$ $!=$
+    \item logical-expression $\rightarrow$ logical-expression log-op additive-expression $|$ additive-expression
+    \item log-op $\rightarrow$ \&\& $|$ $||$
+    \item additive-expression $\rightarrow$ additive-expression add-op mul-expression $|$ mul-expression
+    \item add-op $\rightarrow$ $+$ $|$ $-$
+    \item mul-expression $\rightarrow$ mul-expression mul-op term $|$ term
+    \item mul-op $\rightarrow$ $*$ $|$ $/$
+    \item term $\rightarrow$ (expression) $|$ var $|$ call $|$ NUM $|$ FNUM $|$ string-word
+    \item call $\rightarrow$ ID (args) $|$ print(print-full-args)
+    \item print-full-args $\rightarrow$ string $|$ string args
+    \item args $\rightarrow$ arg-list $|$ $\epsilon$
+    \item arg-list $\rightarrow$ arg-list, expression $|$ expression
+\end{enumerate}
+
+keywords: if else int float string return while print \newline
+Special symbols: $+ - *$ $/$ \& $|$ $>$ $<$ $>=$ $<=$ $==$ $!=$ $,$ $;$\newline
+ID = $letter$ $(letter + digit)^*$ \newline
+NUM = $digit^+$ \newline
+FNUM = NUM.NUM \newline
+string-word = "$(letter + digit + whitespace)^*$"
+
+
+
+
+
+
+\end{document}
