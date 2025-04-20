@@ -4,11 +4,12 @@
          parser-tools/yacc)
 
 (define-tokens value-tokens (STR NUM FNUM ID))
-(define-empty-tokens empty-tokens (EOF INT FLOAT STRING IF ELSE COMMA SEMICOLON PASS BREAK CONTINUE ASSIGN LEFTPAR RIGHTPAR LEFTBR RIGHTBR WHILE OR AND EQ NEQ GT LT GEQ LEQ SUM MINUS MUL DIV TRUE FALSE RETURN LEFTVILI RIGHTVILI))
+(define-empty-tokens empty-tokens (COMMENT EOF INT FLOAT STRING IF ELSE COMMA SEMICOLON PASS BREAK CONTINUE ASSIGN LEFTPAR RIGHTPAR LEFTBR RIGHTBR WHILE OR AND EQ NEQ GT LT GEQ LEQ SUM MINUS MUL DIV TRUE FALSE RETURN LEFTVILI RIGHTVILI))
 
 (define our-lexer (lexer
     [whitespace (our-lexer input-port)]
     [(eof) (token-EOF)]
+    [(:: "/*" (complement (:: any-string "*/" any-string)) "*/") (token-COMMENT)] ;comment
     [(:: "\"" (complement (:: any-string "\"" any-string)) "\"") (token-STR lexeme)] ;string
     [(:: (:+ (char-range #\0 #\9))) (token-NUM lexeme)] ;int
     [(:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9))) (token-FNUM lexeme)] ;float
@@ -61,13 +62,46 @@
 
 ;; Run test cases
 (define (run-tests)
-  (test-lexer "int x; int f () {return 3;}") ; Keywords, operators, int, float
-;   (test-lexer "\"hello world\"") ; String
-;   (test-lexer "while (True) { 123; }") ; Mixed tokens
-;   (test-lexer "1.23 45 \"test\" if else") ; Multiple tokens
-;   (test-lexer "") ; Empty input
-;   (test-lexer "@#$") ; Invalid input to trigger error
-;   (test-lexer "3.14.15")) ; Malformed float to test error handling
+  (test-lexer "
+  int main()
+{
+    int a, b;
+    int c = 0;
+    int d = a;
+    int k = 1;
+    while(d >= 8){
+        int r = d - 8*(d / 8);
+        c = c + (10 , k-1) * r;
+        d = (d/8);
+        k++;
+    }
+    c = c + d * (10,k - 1);
+
+    int h,y,z,s;
+    h = (10,b) * (c/(10,b));
+    y = ((c - h)/(10, b-1));
+    z = (y - 2)*(y > 1) + (y <= 1)*(y + 6);
+
+    s = c + ((z - y) * (10, b-1));
+    int w = 0;
+    int i = 1;
+    while(s >= (10, i - 1)){
+        int l = (10,i) * (s/(10,i));
+        int p = ((s - l)/(10, i-1));
+        w += p * (8, i-1);
+        i++;
+    }
+
+    string a;
+    a = \"njvdskkksdj\";
+
+    /*sjdkvnskdjvnsksdkjvnsdjvnskdvnskdvsdv*/
+    
+
+    return 0;
+}
+  "
+  )
 )
 
 ;; Execute the tests
