@@ -61,47 +61,47 @@
   (printf "Ooooooooh Yeahhhhhhhhhh\n"))
 
 ;; Run test cases
-(define (run-tests)
-  (test-lexer "
+(define input-code "
   int main()
-{
-    int a, b;
-    int c = 0;
-    int d = a;
-    int k = 1;
-    while(d >= 8){
-        int r = d - 8*(d / 8);
-        c = c + (10 , k-1) * r;
-        d = (d/8);
-        k++;
+    {
+        int a, b;
+        int c = 0;
+        int d = a;
+        int k = 1;
+        while(d >= 8){
+            int r = d - 8*(d / 8);
+            c = c + (10 , k-1) * r;
+            d = (d/8);
+            k++;
+        }
+        c = c + d * (10,k - 1);
+
+        int h,y,z,s;
+        h = (10,b) * (c/(10,b));
+        y = ((c - h)/(10, b-1));
+        z = (y - 2)*(y > 1) + (y <= 1)*(y + 6);
+
+        s = c + ((z - y) * (10, b-1));
+        int w = 0;
+        int i = 1;
+        while(s >= (10, i - 1)){
+            int l = (10,i) * (s/(10,i));
+            int p = ((s - l)/(10, i-1));
+            w += p * (8, i-1);
+            i++;
+        }
+
+        string a;
+        a = \"njvdskkksdj\";
+
+        /*sjdkvnskdjvnsksdkjvnsdjvnskdvnskdvsdv*/
+        
+
+        return 0;
     }
-    c = c + d * (10,k - 1);
-
-    int h,y,z,s;
-    h = (10,b) * (c/(10,b));
-    y = ((c - h)/(10, b-1));
-    z = (y - 2)*(y > 1) + (y <= 1)*(y + 6);
-
-    s = c + ((z - y) * (10, b-1));
-    int w = 0;
-    int i = 1;
-    while(s >= (10, i - 1)){
-        int l = (10,i) * (s/(10,i));
-        int p = ((s - l)/(10, i-1));
-        w += p * (8, i-1);
-        i++;
-    }
-
-    string a;
-    a = \"njvdskkksdj\";
-
-    /*sjdkvnskdjvnsksdkjvnsdjvnskdvnskdvsdv*/
-    
-
-    return 0;
-}
-  "
-  )
+  ")
+(define (run-tests)
+  (test-lexer input-code)
 )
 
 ;; Execute the tests
