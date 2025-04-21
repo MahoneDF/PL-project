@@ -47,8 +47,9 @@
     ["return" (token-RETURN)]
     [(:: "/*" (complement (:: any-string "*/" any-string)) "*/") (token-COMMENT)] ;comment
     [(:: "\"" (complement (:: any-string "\"" any-string)) "\"") (token-STR lexeme)] ;string
-    [(:: (:+ (char-range #\0 #\9))) (token-NUM lexeme)] ;int
-    [(:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9))) (token-FNUM lexeme)] ;float
+    [(:: (:or (:+ (char-range #\0 #\9)) (:: "-"(:+ (char-range #\0 #\9))))) (token-NUM lexeme)] ;int
+    [(:: (:or (:+ (char-range #\0 #\9) #\. (:+ (char-range #\0 #\9)))
+              (:: "-"(:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9))))) (token-FNUM lexeme)] ;float
     [(:+ (:or (char-range #\a #\z) (char-range #\A #\Z) (char-range #\0 #\9) #\_)) (token-ID lexeme)]
 ))
 
@@ -104,9 +105,16 @@
     }
   ")
 
+(define input-code-with-negetive-number "
+        int negNum = -1;
+        float negFloat = -12.5;
+  ")
 (define (run-tests)
+  (displayln "---------------------First Test---------------------")
   (test-lexer input-code)
+  (displayln "---------------------Second Test---------------------")
+  (test-lexer input-code-with-negetive-number)
 )
 
-;; Execute the tests
+; Execute the tests
 ; (run-tests)
