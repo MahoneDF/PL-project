@@ -133,22 +133,7 @@
         result))))
 
 
-;   (test-parse "
-; int main() {
-;     int x = 42;
-;     float y = 3.14;
-;     if (x > 0) {
-;         y = y * 2;
-;     } else {
-;         return -1;
-;     }
-;     while (y < 10) {
-;         y = y + 1;
-;     }
-;     return x;
-; }
-; "
-;   )
+
 (test-parse "int main () {}")
 (test-parse "int main (int a, int b []) {}")
 (test-parse "int main (int a, int b []) {
@@ -161,3 +146,21 @@
     else {;}
     return 0;
     }")
+(test-parse "
+int main() {
+    int x;
+    float y;
+    x = 42;
+    y = 3.14;
+    if (x > 0) {
+        y = y * 2;
+    } else {
+        return 1;
+    }
+    while (y < 10) {
+        y = y + 1;
+    }
+    return x;
+}
+"
+  )
