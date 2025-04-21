@@ -46,11 +46,11 @@
             [(LEFTVILI local-dec stmnt-list RIGHTVILI) (list 'compound-stmnt $2 $3)])
         (local-dec 
             ; [(local-dec var-declaration) (append $1 (list $2))]
-            [(local-dec var-declaration) (cons $1 $2)]
+            [(local-dec var-declaration) (append $1 (list $2))]
             [() '()])
         (stmnt-list
             ; [(stmnt-list stmnt) (append $1 (list $2))]
-            [(stmnt-list stmnt) (cons $1 (list $2))]
+            [(stmnt-list stmnt) (append $1 (list $2))]
             [() '()])
         (stmnt
             [(compound-stmnt) $1]
@@ -70,11 +70,11 @@
             [(expression SEMICOLON) $1]
             [(SEMICOLON) (list 'empty-exp)])
         (expression
-            [(var ASSIGN expression) (list 'assign $1 $3)]
-            [(simple-expression) (list $1)])
+            [(var ASSIGN expression) (list $1 '= $3)]
+            [(simple-expression) $1])
         (var
-            [(ID) (list $1)]
-            [(ID LEFTBR expression RIGHTBR) (list $1 $3)]) ;;;;;;;;;;;;;wtf
+            [(ID) $1]
+            [(ID LEFTBR expression RIGHTBR) (list $1 "[" $3 "]")])
         (simple-expression
             [(logical-expression rel-op logical-expression) (list $1 $2 $3)]
             [(logical-expression) $1])
@@ -92,7 +92,7 @@
             [(AND) '&&]
             [(OR) '||])
         (additive-expression
-            [(additive-expression add-op mul-expression) (list $2 $1 $3)]
+            [(additive-expression add-op mul-expression) (list $1 $2 $3)]
             [(mul-expression) $1])
         (add-op
             [(SUM) '+]
@@ -151,4 +151,13 @@
 ;   )
 (test-parse "int main () {}")
 (test-parse "int main (int a, int b []) {}")
-(test-parse "int main (int a, int b []) {return 0;}")
+(test-parse "int main (int a, int b []) {
+    int y;
+    int z;
+    int h;
+    x = y + 3;
+    z = ii - 1;
+    if (3 == 9) {d = y + 0;}
+    else {;}
+    return 0;
+    }")
