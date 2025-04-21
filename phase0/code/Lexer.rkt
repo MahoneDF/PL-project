@@ -3,20 +3,18 @@
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)
 
+(provide (all-defined-out))
+
 (define-tokens value-tokens (STR NUM FNUM ID))
-(define-empty-tokens empty-tokens (COMMENT EOF INT FLOAT STRING IF ELSE COMMA SEMICOLON PASS BREAK CONTINUE ASSIGN LEFTPAR RIGHTPAR LEFTBR RIGHTBR WHILE OR AND EQ NEQ GT LT GEQ LEQ SUM MINUS MUL DIV TRUE FALSE RETURN LEFTVILI RIGHTVILI))
+(define-empty-tokens empty-tokens (COMMENT EOF INT FLOAT STRING PRINT IF ELSE COMMA SEMICOLON PASS BREAK CONTINUE ASSIGN LEFTPAR RIGHTPAR LEFTBR RIGHTBR WHILE OR AND EQ NEQ GT LT GEQ LEQ SUM MINUS MUL DIV TRUE FALSE RETURN LEFTVILI RIGHTVILI))
 
 (define our-lexer (lexer
     [whitespace (our-lexer input-port)]
     [(eof) (token-EOF)]
-    [(:: "/*" (complement (:: any-string "*/" any-string)) "*/") (token-COMMENT)] ;comment
-    [(:: "\"" (complement (:: any-string "\"" any-string)) "\"") (token-STR lexeme)] ;string
-    [(:: (:+ (char-range #\0 #\9))) (token-NUM lexeme)] ;int
-    [(:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9))) (token-FNUM lexeme)] ;float
-    [(:+ (:or (char-range #\a #\z) (char-range #\A #\Z) (char-range #\0 #\9) #\_)) (token-ID lexeme)]
     ["int" (token-INT)]
     ["float" (token-FLOAT)]
     ["string" (token-STRING)]
+    ["print" (token-PRINT)]
     ["if" (token-IF)]
     ["else" (token-ELSE)]
     ["," (token-COMMA)]
@@ -47,6 +45,11 @@
     ["True" (token-TRUE)]
     ["False" (token-FALSE)]
     ["return" (token-RETURN)]
+    [(:: "/*" (complement (:: any-string "*/" any-string)) "*/") (token-COMMENT)] ;comment
+    [(:: "\"" (complement (:: any-string "\"" any-string)) "\"") (token-STR lexeme)] ;string
+    [(:: (:+ (char-range #\0 #\9))) (token-NUM lexeme)] ;int
+    [(:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9))) (token-FNUM lexeme)] ;float
+    [(:+ (:or (char-range #\a #\z) (char-range #\A #\Z) (char-range #\0 #\9) #\_)) (token-ID lexeme)]
 ))
 
 (define (test-lexer input-string)
@@ -100,9 +103,10 @@
         return 0;
     }
   ")
+
 (define (run-tests)
   (test-lexer input-code)
 )
 
 ;; Execute the tests
-(run-tests)
+; (run-tests)

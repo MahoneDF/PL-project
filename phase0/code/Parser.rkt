@@ -4,58 +4,151 @@
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)
 (require "Lexer.rkt")
-(require "datatypes.rkt")
 
 (define our-parser (parser
     (start program)
     (end EOF)
-    (error void)
+    (error (lambda (tok-ok? tok-name tok-value)
+         (printf "Parse error at token ~a (value: ~a)\n" tok-name tok-value)
+         (error 'parser "Cannot continue after error")))
     (tokens value-tokens empty-tokens)
-    (grammer
+    (debug "debugging_log.log")
+    (grammar
         (program
-            [(declaration-list) (program $1)])
+            [(declaration-list) (list 'program $1)])
         (declaration-list
             ; [(declaration-list declaration) (dclist $1 $2)]
             [(declaration-list declaration) (append $1 (list $2))]
             ; [(declaration) (decl $1)])
             [(declaration) $1])
         (declaration 
-            [(var-declaration) (vardec $1)]
-            [(fun-declaration) (fundec $2)])
+            [(var-declaration) (list 'vardec $1)]
+            [(fun-declaration) (list 'fundec $1)])
         (var-declaration
-            [(type-spec ID SEMICOLON) (var-spec $1 $2)]
-            [(type-spec ID LEFTBR NUM RIGHTBR SEMICOLON) (array-spec $1 $2 $4)])
+            [(type-spec ID SEMICOLON) (list 'var-spec $1 $2)]
+            [(type-spec ID LEFTBR NUM RIGHTBR SEMICOLON) (list 'array-spec $1 $2 $4)])
         (type-spec 
-            [(int) ("int")]
-            [(float) ("float")]
-            [(string) ("string")])
+            [(INT) 'int]
+            [(FLOAT) 'float]
+            [(STRING) 'string])
         (fun-declaration
-            [(type-spec ID LEFTPAR params RIGHTPAR compound-stmnt) (fun-dcl $1 $2 $4 $6)])
+            [(type-spec ID LEFTPAR params RIGHTPAR compound-stmnt) (list 'fun-dcl $1 $2 $4 $6)])
         (params
-            [(param-list) (a-param-list $1)]
-            [() ()])
+            [(param-list) (list 'param-list $1)]
+            [() '()])
         (param-list
-            [(param-list COMMA param) (append $1 (list $3))]
+            [(param-list COMMA param) (append $1 $3)]
             [(param) $1])
         (param
-            [(type-spec ID) (argvar $1 $2)]
-            [(type-spec ID LEFTBR RIGHTBR) (argarray $1 $2)])
+            [(type-spec ID) (list (list 'argvar $1 $2))]
+            [(type-spec ID LEFTBR RIGHTBR) (list (list 'argarray $1 $2))])
         (compound-stmnt
-            [(LEFTVILI local-dec stmnt-list RIGHTVILI) (compound-stmnt $2 $3)])
+            [(LEFTVILI local-dec stmnt-list RIGHTVILI) (list 'compound-stmnt $2 $3)])
         (local-dec 
-            [(local-dec var-declaration) (append $1 (list $2))]
-            [() ()])
+            ; [(local-dec var-declaration) (append $1 (list $2))]
+            [(local-dec var-declaration) (cons $1 $2)]
+            [() '()])
         (stmnt-list
-            [(stmnt-list stmnt) (append $1 (list $2))]
-            [() ()])
+            ; [(stmnt-list stmnt) (append $1 (list $2))]
+            [(stmnt-list stmnt) (cons $1 (list $2))]
+            [() '()])
         (stmnt
             [(compound-stmnt) $1]
             [(cond-stmnt) $1]
             [(iter-stmnt) $1]
             [(return-stmnt) $1]
             [(expression-stmnt) $1])
-        (compound-stmnt
-            [(IF LEFTPAR expression RIGHTPAR stmnt) (comp)]
-            [(IF LEFTPAR expression RIGHTPAR stmnt ELSE stmnt) ()])
+        (cond-stmnt
+            [(IF LEFTPAR expression RIGHTPAR stmnt) (list 'if $3 $5)]
+            [(IF LEFTPAR expression RIGHTPAR stmnt ELSE stmnt) (list 'if $3 $5 'else $7)])
+        (iter-stmnt
+            [(WHILE LEFTPAR expression RIGHTPAR stmnt) (list 'while $3 $5)])
+        (return-stmnt
+            [(RETURN SEMICOLON) (list 'empty-return)]
+            [(RETURN expression SEMICOLON) (list 'return $2)])
+        (expression-stmnt
+            [(expression SEMICOLON) $1]
+            [(SEMICOLON) (list 'empty-exp)])
+        (expression
+            [(var ASSIGN expression) (list 'assign $1 $3)]
+            [(simple-expression) (list $1)])
+        (var
+            [(ID) (list $1)]
+            [(ID LEFTBR expression RIGHTBR) (list $1 $3)]) ;;;;;;;;;;;;;wtf
+        (simple-expression
+            [(logical-expression rel-op logical-expression) (list $1 $2 $3)]
+            [(logical-expression) $1])
+        (rel-op 
+            [(GT) '>]
+            [(LT) '<]
+            [(GEQ) '>=]
+            [(LEQ) '<=]
+            [(EQ) '==]
+            [(NEQ) '!=])
+        (logical-expression
+            [(logical-expression log-op additive-expression) (list $2 $1 $3)]
+            [(additive-expression) $1])
+        (log-op
+            [(AND) '&&]
+            [(OR) '||])
+        (additive-expression
+            [(additive-expression add-op mul-expression) (list $2 $1 $3)]
+            [(mul-expression) $1])
+        (add-op
+            [(SUM) '+]
+            [(MINUS) '-])
+        (mul-expression
+            [(mul-expression mul-op term) (list $2 $1 $3)]
+            [(term) $1])
+        (mul-op
+            [(MUL) '*]
+            [(DIV) '/])
+        (term
+            [(LEFTPAR expression RIGHTPAR) (list $2)]
+            [(var) (list $1)]
+            [(call) (list 'call $1)]
+            [(NUM) $1]
+            [(FNUM) $1]
+            [(STR) $1])
+        (call
+            [(ID LEFTPAR args RIGHTPAR) (list $1 $3)]
+            [(PRINT LEFTPAR print-ful-args RIGHTPAR) (list 'print $3)])
+        (print-ful-args
+            [(STRING args) (list 'string $2)])
+        (args
+            [(arg-list) $1]
+            [() '()])
+        (arg-list
+            [(arg-list COMMA expression) (append $1 (list $3))]
+            [(expression) (list $1)])
     )
 ))
+
+
+(define (test-parse input-string)
+  (let ([ip (open-input-string input-string)])
+    (with-handlers ([exn:fail? (lambda (exn) (printf "Error: ~a\n" (exn-message exn)))])
+      (let ([result (our-parser (lambda () (our-lexer ip)))])
+        (printf "AST: ~a\n" result)
+        result))))
+
+
+;   (test-parse "
+; int main() {
+;     int x = 42;
+;     float y = 3.14;
+;     if (x > 0) {
+;         y = y * 2;
+;     } else {
+;         return -1;
+;     }
+;     while (y < 10) {
+;         y = y + 1;
+;     }
+;     return x;
+; }
+; "
+;   )
+(test-parse "int main () {}")
+(test-parse "int main (int a, int b []) {}")
+(test-parse "int main (int a, int b []) {return 0;}")
