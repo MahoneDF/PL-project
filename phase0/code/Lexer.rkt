@@ -109,4 +109,4 @@
 )
 
 ;; Execute the tests
-; (run-tests)
+(run-tests)
