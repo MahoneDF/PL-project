@@ -20,7 +20,7 @@ Our grammar is based on C-minus grammar which you can find in \href{http://www.c
     \item compound-stmnt $\rightarrow$ $\{$stmnt-list$\}$
     \item stmnt-list $\rightarrow$ stmnt-list stmnt $|$ $\epsilon$
     \item stmnt $\rightarrow$ compound-stmnt $|$ cond-stmnt $|$ iter-stmnt $|$ return-stmnt $|$ expression-stmnt $|$ var-declaration
-    \item cond-stmnt $\rightarrow$ if (expression) stmnt  $|$ if (expression) compound-stmnt else compound-stmnt
+    \item cond-stmnt $\rightarrow$ if (expression) compound-stmnt else compound-stmnt
     \item iter-stmnt $\rightarrow$ while (expression) compound-stmnt
     \item return-stmnt $\rightarrow$ return; $|$ return expression;
     \item expression-stmnt $\rightarrow$ expression; $|$ ;
