@@ -25,8 +25,8 @@
             [(var-declaration) (list 'vardec $1)]
             [(fun-declaration) (list 'fundec $1)])
         (var-declaration
-            [(type-spec ID SEMICOLON) (list 'var-spec $1 $2)]
-            [(type-spec ID LEFTBR NUM RIGHTBR SEMICOLON) (list 'array-spec $1 $2 $4)])
+            [(type-spec ID LEFTBR NUM RIGHTBR SEMICOLON) (list 'array-spec $1 $2 $4)]
+            [(type-spec ID SEMICOLON) (list 'var-spec $1 $2)])
         (type-spec 
             [(INT) 'int]
             [(FLOAT) 'float]
@@ -40,8 +40,8 @@
             [(param-list COMMA param) (append $1 $3)]
             [(param) $1])
         (param
-            [(type-spec ID) (list (list 'argvar $1 $2))]
-            [(type-spec ID LEFTBR RIGHTBR) (list (list 'argarray $1 $2))])
+            [(type-spec ID LEFTBR RIGHTBR) (list (list 'argarray $1 $2))]
+            [(type-spec ID) (list (list 'argvar $1 $2))])
         (compound-stmnt
             [(LEFTVILI local-dec stmnt-list RIGHTVILI) (list 'compound-stmnt $2 $3)])
         (local-dec 
@@ -59,8 +59,9 @@
             [(return-stmnt) $1]
             [(expression-stmnt) $1])
         (cond-stmnt
-            [(IF LEFTPAR expression RIGHTPAR stmnt) (list 'if $3 $5)]
-            [(IF LEFTPAR expression RIGHTPAR stmnt ELSE stmnt) (list 'if $3 $5 'else $7)])
+            [(IF LEFTPAR expression RIGHTPAR stmnt ELSE stmnt) (list 'if $3 $5 'else $7)]
+            ; [(IF LEFTPAR expression RIGHTPAR stmnt) (list 'if $3 $5)])
+        )
         (iter-stmnt
             [(WHILE LEFTPAR expression RIGHTPAR stmnt) (list 'while $3 $5)])
         (return-stmnt
@@ -114,7 +115,7 @@
             [(ID LEFTPAR args RIGHTPAR) (list $1 $3)]
             [(PRINT LEFTPAR print-ful-args RIGHTPAR) (list 'print $3)])
         (print-ful-args
-            [(STRING args) (list 'string $2)])
+            [(STR args) (list 'string $1 $2)])
         (args
             [(arg-list) $1]
             [() '()])
@@ -132,10 +133,10 @@
         (printf "AST: ~a\n" result)
         result))))
 
-
-
-(test-parse "int main () {}")
-(test-parse "int main (int a, int b []) {}")
+(test-parse "int salam (){} int main(int a, string b) {int x; print(\"what the hell\");}")
+; (test-parse "int a;")
+; (test-parse "int main () {}")
+; (test-parse "int main (int a, int b []) {}")
 (test-parse "int main (int a, int b []) {
     int y;
     int z;

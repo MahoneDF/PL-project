@@ -21,7 +21,7 @@
     \item stmnt-list $\rightarrow$ stmnt-list stmnt $|$ $\epsilon$
     \item stmnt $\rightarrow$ compound-stmnt $|$ cond-stmnt $|$ iter-stmnt $|$ return-stmnt $|$ expression-stmnt
     \item cond-stmnt $\rightarrow$ if (expression) stmnt  $|$ if (expression) stmnt else stmnt
-    \item iter-stmnt $\rightarrow$ while (expression) stmnt
+    \item iter-stmnt $\rightarrow$ while (expression) compound-stmnt
     \item return-stmnt $\rightarrow$ return; $|$ return expression;
     \item expression-stmnt $\rightarrow$ expression; $|$ ;
     \item expression $\rightarrow$ var = expression $|$ simple-expression
