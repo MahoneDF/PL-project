@@ -1,0 +1,1506 @@
+0	g2289	=	(g2290)
+1	g2290	=	(program EOF)
+2	program	=	(declaration-list)
+3	declaration-list	=	(declaration-list declaration)
+4	declaration-list	=	(declaration)
+5	declaration	=	(var-declaration)
+6	declaration	=	(fun-declaration)
+7	var-declaration	=	(type-spec ID LEFTBR NUM RIGHTBR SEMICOLON)
+8	var-declaration	=	(type-spec ID SEMICOLON)
+9	type-spec	=	(INT)
+10	type-spec	=	(FLOAT)
+11	type-spec	=	(STRING)
+12	fun-declaration	=	(type-spec ID LEFTPAR params RIGHTPAR compound-stmnt)
+13	params	=	(param-list)
+14	params	=	()
+15	param-list	=	(param-list COMMA param)
+16	param-list	=	(param)
+17	param	=	(type-spec ID LEFTBR RIGHTBR)
+18	param	=	(type-spec ID)
+19	compound-stmnt	=	(LEFTVILI stmnt-list RIGHTVILI)
+20	stmnt-list	=	(stmnt-list stmnt)
+21	stmnt-list	=	()
+22	stmnt	=	(compound-stmnt)
+23	stmnt	=	(cond-stmnt)
+24	stmnt	=	(iter-stmnt)
+25	stmnt	=	(return-stmnt)
+26	stmnt	=	(expression-stmnt)
+27	stmnt	=	(var-declaration)
+28	cond-stmnt	=	(IF LEFTPAR expression RIGHTPAR compound-stmnt ELSE compound-stmnt)
+29	iter-stmnt	=	(WHILE LEFTPAR expression RIGHTPAR compound-stmnt)
+30	return-stmnt	=	(RETURN SEMICOLON)
+31	return-stmnt	=	(RETURN expression SEMICOLON)
+32	expression-stmnt	=	(expression SEMICOLON)
+33	expression-stmnt	=	(SEMICOLON)
+34	expression	=	(var ASSIGN expression)
+35	expression	=	(simple-expression)
+36	var	=	(ID)
+37	var	=	(ID LEFTBR expression RIGHTBR)
+38	simple-expression	=	(logical-expression rel-op logical-expression)
+39	simple-expression	=	(logical-expression)
+40	rel-op	=	(GT)
+41	rel-op	=	(LT)
+42	rel-op	=	(GEQ)
+43	rel-op	=	(LEQ)
+44	rel-op	=	(EQ)
+45	rel-op	=	(NEQ)
+46	logical-expression	=	(logical-expression log-op additive-expression)
+47	logical-expression	=	(additive-expression)
+48	log-op	=	(AND)
+49	log-op	=	(OR)
+50	additive-expression	=	(additive-expression add-op mul-expression)
+51	additive-expression	=	(mul-expression)
+52	add-op	=	(SUM)
+53	add-op	=	(MINUS)
+54	mul-expression	=	(mul-expression mul-op term)
+55	mul-expression	=	(term)
+56	mul-op	=	(MUL)
+57	mul-op	=	(DIV)
+58	term	=	(LEFTPAR expression RIGHTPAR)
+59	term	=	(var)
+60	term	=	(call)
+61	term	=	(NUM)
+62	term	=	(FNUM)
+63	term	=	(STR)
+64	call	=	(ID LEFTPAR args RIGHTPAR)
+65	call	=	(PRINT LEFTPAR print-ful-args RIGHTPAR)
+66	print-ful-args	=	(STR args)
+67	args	=	(arg-list)
+68	args	=	()
+69	arg-list	=	(arg-list COMMA expression)
+70	arg-list	=	(expression)
+State 0
+	g2289 -> . g2290 
+
+	var-declaration					goto	5
+	fun-declaration					goto	7
+	program					goto	2
+	STRING					shift	10
+	FLOAT					shift	9
+	declaration					goto	4
+	INT					shift	8
+	g2290					goto	1
+	type-spec					goto	6
+	declaration-list					goto	3
+
+State 1
+	g2289 -> g2290 . 
+
+
+State 2
+	g2290 -> program . EOF 
+
+	EOF					accept	
+
+State 3
+	program -> declaration-list . 
+	declaration-list -> declaration-list . declaration 
+
+	FLOAT					shift	9
+	fun-declaration					goto	7
+	var-declaration					goto	5
+	declaration					goto	12
+	INT					shift	8
+	EOF					reduce	2
+	STRING					shift	10
+	type-spec					goto	6
+
+State 4
+	declaration-list -> declaration . 
+
+	FLOAT					reduce	4
+	INT					reduce	4
+	EOF					reduce	4
+	STRING					reduce	4
+
+State 5
+	declaration -> var-declaration . 
+
+	FLOAT					reduce	5
+	INT					reduce	5
+	EOF					reduce	5
+	STRING					reduce	5
+
+State 6
+	var-declaration -> type-spec . ID LEFTBR NUM RIGHTBR SEMICOLON 
+	var-declaration -> type-spec . ID SEMICOLON 
+	fun-declaration -> type-spec . ID LEFTPAR params RIGHTPAR compound-stmnt 
+
+	ID					shift	13
+
+State 7
+	declaration -> fun-declaration . 
+
+	FLOAT					reduce	6
+	INT					reduce	6
+	EOF					reduce	6
+	STRING					reduce	6
+
+State 8
+	type-spec -> INT . 
+
+	ID					reduce	9
+
+State 9
+	type-spec -> FLOAT . 
+
+	ID					reduce	10
+
+State 10
+	type-spec -> STRING . 
+
+	ID					reduce	11
+
+State 11
+	g2290 -> program EOF . 
+
+
+State 12
+	declaration-list -> declaration-list declaration . 
+
+	FLOAT					reduce	3
+	INT					reduce	3
+	EOF					reduce	3
+	STRING					reduce	3
+
+State 13
+	var-declaration -> type-spec ID . LEFTBR NUM RIGHTBR SEMICOLON 
+	var-declaration -> type-spec ID . SEMICOLON 
+	fun-declaration -> type-spec ID . LEFTPAR params RIGHTPAR compound-stmnt 
+
+	LEFTBR					shift	16
+	LEFTPAR					shift	15
+	SEMICOLON					shift	14
+
+State 14
+	var-declaration -> type-spec ID SEMICOLON . 
+
+	ID					reduce	8
+	STR					reduce	8
+	IF					reduce	8
+	SEMICOLON					reduce	8
+	PRINT					reduce	8
+	NUM					reduce	8
+	EOF					reduce	8
+	STRING					reduce	8
+	FLOAT					reduce	8
+	INT					reduce	8
+	LEFTVILI					reduce	8
+	RETURN					reduce	8
+	LEFTPAR					reduce	8
+	WHILE					reduce	8
+	FNUM					reduce	8
+	RIGHTVILI					reduce	8
+
+State 15
+	fun-declaration -> type-spec ID LEFTPAR . params RIGHTPAR compound-stmnt 
+
+	FLOAT					shift	9
+	RIGHTPAR					reduce	14
+	INT					shift	8
+	param-list					goto	19
+	param					goto	20
+	params					goto	18
+	STRING					shift	10
+	type-spec					goto	17
+
+State 16
+	var-declaration -> type-spec ID LEFTBR . NUM RIGHTBR SEMICOLON 
+
+	NUM					shift	21
+
+State 17
+	param -> type-spec . ID LEFTBR RIGHTBR 
+	param -> type-spec . ID 
+
+	ID					shift	22
+
+State 18
+	fun-declaration -> type-spec ID LEFTPAR params . RIGHTPAR compound-stmnt 
+
+	RIGHTPAR					shift	23
+
+State 19
+	params -> param-list . 
+	param-list -> param-list . COMMA param 
+
+	COMMA					shift	24
+	RIGHTPAR					reduce	13
+
+State 20
+	param-list -> param . 
+
+	COMMA					reduce	16
+	RIGHTPAR					reduce	16
+
+State 21
+	var-declaration -> type-spec ID LEFTBR NUM . RIGHTBR SEMICOLON 
+
+	RIGHTBR					shift	25
+
+State 22
+	param -> type-spec ID . LEFTBR RIGHTBR 
+	param -> type-spec ID . 
+
+	LEFTBR					shift	26
+	COMMA					reduce	18
+	RIGHTPAR					reduce	18
+
+State 23
+	fun-declaration -> type-spec ID LEFTPAR params RIGHTPAR . compound-stmnt 
+
+	compound-stmnt					goto	27
+	LEFTVILI					shift	28
+
+State 24
+	param-list -> param-list COMMA . param 
+
+	FLOAT					shift	9
+	INT					shift	8
+	param					goto	29
+	STRING					shift	10
+	type-spec					goto	17
+
+State 25
+	var-declaration -> type-spec ID LEFTBR NUM RIGHTBR . SEMICOLON 
+
+	SEMICOLON					shift	30
+
+State 26
+	param -> type-spec ID LEFTBR . RIGHTBR 
+
+	RIGHTBR					shift	31
+
+State 27
+	fun-declaration -> type-spec ID LEFTPAR params RIGHTPAR compound-stmnt . 
+
+	FLOAT					reduce	12
+	INT					reduce	12
+	EOF					reduce	12
+	STRING					reduce	12
+
+State 28
+	compound-stmnt -> LEFTVILI . stmnt-list RIGHTVILI 
+
+	ID					reduce	21
+	STR					reduce	21
+	IF					reduce	21
+	SEMICOLON					reduce	21
+	PRINT					reduce	21
+	stmnt-list					goto	32
+	NUM					reduce	21
+	STRING					reduce	21
+	FLOAT					reduce	21
+	INT					reduce	21
+	LEFTVILI					reduce	21
+	RETURN					reduce	21
+	LEFTPAR					reduce	21
+	WHILE					reduce	21
+	FNUM					reduce	21
+	RIGHTVILI					reduce	21
+
+State 29
+	param-list -> param-list COMMA param . 
+
+	COMMA					reduce	15
+	RIGHTPAR					reduce	15
+
+State 30
+	var-declaration -> type-spec ID LEFTBR NUM RIGHTBR SEMICOLON . 
+
+	ID					reduce	7
+	STR					reduce	7
+	IF					reduce	7
+	SEMICOLON					reduce	7
+	PRINT					reduce	7
+	NUM					reduce	7
+	EOF					reduce	7
+	STRING					reduce	7
+	FLOAT					reduce	7
+	INT					reduce	7
+	LEFTVILI					reduce	7
+	RETURN					reduce	7
+	LEFTPAR					reduce	7
+	WHILE					reduce	7
+	FNUM					reduce	7
+	RIGHTVILI					reduce	7
+
+State 31
+	param -> type-spec ID LEFTBR RIGHTBR . 
+
+	COMMA					reduce	17
+	RIGHTPAR					reduce	17
+
+State 32
+	compound-stmnt -> LEFTVILI stmnt-list . RIGHTVILI 
+	stmnt-list -> stmnt-list . stmnt 
+
+	term					goto	47
+	IF					shift	54
+	call					goto	48
+	SEMICOLON					shift	55
+	var					goto	42
+	FLOAT					shift	9
+	expression					goto	41
+	LEFTVILI					shift	28
+	RETURN					shift	58
+	LEFTPAR					shift	56
+	FNUM					shift	51
+	type-spec					goto	34
+	RIGHTVILI					shift	59
+	ID					shift	52
+	var-declaration					goto	33
+	STR					shift	49
+	mul-expression					goto	46
+	PRINT					shift	53
+	logical-expression					goto	44
+	NUM					shift	50
+	STRING					shift	10
+	expression-stmnt					goto	40
+	simple-expression					goto	43
+	return-stmnt					goto	39
+	cond-stmnt					goto	37
+	compound-stmnt					goto	35
+	INT					shift	8
+	iter-stmnt					goto	38
+	stmnt					goto	36
+	additive-expression					goto	45
+	WHILE					shift	57
+
+State 33
+	stmnt -> var-declaration . 
+
+	ID					reduce	27
+	STR					reduce	27
+	IF					reduce	27
+	SEMICOLON					reduce	27
+	PRINT					reduce	27
+	NUM					reduce	27
+	STRING					reduce	27
+	FLOAT					reduce	27
+	INT					reduce	27
+	LEFTVILI					reduce	27
+	RETURN					reduce	27
+	LEFTPAR					reduce	27
+	WHILE					reduce	27
+	FNUM					reduce	27
+	RIGHTVILI					reduce	27
+
+State 34
+	var-declaration -> type-spec . ID LEFTBR NUM RIGHTBR SEMICOLON 
+	var-declaration -> type-spec . ID SEMICOLON 
+
+	ID					shift	60
+
+State 35
+	stmnt -> compound-stmnt . 
+
+	ID					reduce	22
+	STR					reduce	22
+	IF					reduce	22
+	SEMICOLON					reduce	22
+	PRINT					reduce	22
+	NUM					reduce	22
+	STRING					reduce	22
+	FLOAT					reduce	22
+	INT					reduce	22
+	LEFTVILI					reduce	22
+	RETURN					reduce	22
+	LEFTPAR					reduce	22
+	WHILE					reduce	22
+	FNUM					reduce	22
+	RIGHTVILI					reduce	22
+
+State 36
+	stmnt-list -> stmnt-list stmnt . 
+
+	ID					reduce	20
+	STR					reduce	20
+	IF					reduce	20
+	SEMICOLON					reduce	20
+	PRINT					reduce	20
+	NUM					reduce	20
+	STRING					reduce	20
+	FLOAT					reduce	20
+	INT					reduce	20
+	LEFTVILI					reduce	20
+	RETURN					reduce	20
+	LEFTPAR					reduce	20
+	WHILE					reduce	20
+	FNUM					reduce	20
+	RIGHTVILI					reduce	20
+
+State 37
+	stmnt -> cond-stmnt . 
+
+	ID					reduce	23
+	STR					reduce	23
+	IF					reduce	23
+	SEMICOLON					reduce	23
+	PRINT					reduce	23
+	NUM					reduce	23
+	STRING					reduce	23
+	FLOAT					reduce	23
+	INT					reduce	23
+	LEFTVILI					reduce	23
+	RETURN					reduce	23
+	LEFTPAR					reduce	23
+	WHILE					reduce	23
+	FNUM					reduce	23
+	RIGHTVILI					reduce	23
+
+State 38
+	stmnt -> iter-stmnt . 
+
+	ID					reduce	24
+	STR					reduce	24
+	IF					reduce	24
+	SEMICOLON					reduce	24
+	PRINT					reduce	24
+	NUM					reduce	24
+	STRING					reduce	24
+	FLOAT					reduce	24
+	INT					reduce	24
+	LEFTVILI					reduce	24
+	RETURN					reduce	24
+	LEFTPAR					reduce	24
+	WHILE					reduce	24
+	FNUM					reduce	24
+	RIGHTVILI					reduce	24
+
+State 39
+	stmnt -> return-stmnt . 
+
+	ID					reduce	25
+	STR					reduce	25
+	IF					reduce	25
+	SEMICOLON					reduce	25
+	PRINT					reduce	25
+	NUM					reduce	25
+	STRING					reduce	25
+	FLOAT					reduce	25
+	INT					reduce	25
+	LEFTVILI					reduce	25
+	RETURN					reduce	25
+	LEFTPAR					reduce	25
+	WHILE					reduce	25
+	FNUM					reduce	25
+	RIGHTVILI					reduce	25
+
+State 40
+	stmnt -> expression-stmnt . 
+
+	ID					reduce	26
+	STR					reduce	26
+	IF					reduce	26
+	SEMICOLON					reduce	26
+	PRINT					reduce	26
+	NUM					reduce	26
+	STRING					reduce	26
+	FLOAT					reduce	26
+	INT					reduce	26
+	LEFTVILI					reduce	26
+	RETURN					reduce	26
+	LEFTPAR					reduce	26
+	WHILE					reduce	26
+	FNUM					reduce	26
+	RIGHTVILI					reduce	26
+
+State 41
+	expression-stmnt -> expression . SEMICOLON 
+
+	SEMICOLON					shift	61
+
+State 42
+	expression -> var . ASSIGN expression 
+	term -> var . 
+
+	EQ					reduce	59
+	AND					reduce	59
+	DIV					reduce	59
+	SEMICOLON					reduce	59
+	ASSIGN					shift	62
+	LT					reduce	59
+	LEQ					reduce	59
+	GEQ					reduce	59
+	COMMA					reduce	59
+	RIGHTBR					reduce	59
+	NEQ					reduce	59
+	MUL					reduce	59
+	GT					reduce	59
+	SUM					reduce	59
+	OR					reduce	59
+	RIGHTPAR					reduce	59
+	MINUS					reduce	59
+
+State 43
+	expression -> simple-expression . 
+
+	COMMA					reduce	35
+	RIGHTPAR					reduce	35
+	SEMICOLON					reduce	35
+	RIGHTBR					reduce	35
+
+State 44
+	simple-expression -> logical-expression . rel-op logical-expression 
+	simple-expression -> logical-expression . 
+	logical-expression -> logical-expression . log-op additive-expression 
+
+	EQ					shift	67
+	NEQ					shift	68
+	AND					shift	66
+	SEMICOLON					reduce	39
+	LT					shift	70
+	GT					shift	69
+	LEQ					shift	72
+	GEQ					shift	71
+	COMMA					reduce	39
+	log-op					goto	64
+	RIGHTPAR					reduce	39
+	OR					shift	65
+	RIGHTBR					reduce	39
+	rel-op					goto	63
+
+State 45
+	logical-expression -> additive-expression . 
+	additive-expression -> additive-expression . add-op mul-expression 
+
+	EQ					reduce	47
+	NEQ					reduce	47
+	AND					reduce	47
+	SEMICOLON					reduce	47
+	LT					reduce	47
+	GT					reduce	47
+	LEQ					reduce	47
+	COMMA					reduce	47
+	GEQ					reduce	47
+	SUM					shift	74
+	RIGHTPAR					reduce	47
+	OR					reduce	47
+	add-op					goto	73
+	MINUS					shift	75
+	RIGHTBR					reduce	47
+
+State 46
+	additive-expression -> mul-expression . 
+	mul-expression -> mul-expression . mul-op term 
+
+	EQ					reduce	51
+	AND					reduce	51
+	SEMICOLON					reduce	51
+	DIV					shift	78
+	LT					reduce	51
+	LEQ					reduce	51
+	GEQ					reduce	51
+	COMMA					reduce	51
+	RIGHTBR					reduce	51
+	NEQ					reduce	51
+	MUL					shift	77
+	GT					reduce	51
+	SUM					reduce	51
+	OR					reduce	51
+	RIGHTPAR					reduce	51
+	MINUS					reduce	51
+	mul-op					goto	76
+
+State 47
+	mul-expression -> term . 
+
+	EQ					reduce	55
+	NEQ					reduce	55
+	AND					reduce	55
+	MUL					reduce	55
+	SEMICOLON					reduce	55
+	DIV					reduce	55
+	LT					reduce	55
+	GT					reduce	55
+	LEQ					reduce	55
+	COMMA					reduce	55
+	GEQ					reduce	55
+	RIGHTPAR					reduce	55
+	OR					reduce	55
+	SUM					reduce	55
+	MINUS					reduce	55
+	RIGHTBR					reduce	55
+
+State 48
+	term -> call . 
+
+	EQ					reduce	60
+	NEQ					reduce	60
+	AND					reduce	60
+	MUL					reduce	60
+	SEMICOLON					reduce	60
+	DIV					reduce	60
+	LT					reduce	60
+	GT					reduce	60
+	LEQ					reduce	60
+	COMMA					reduce	60
+	GEQ					reduce	60
+	RIGHTPAR					reduce	60
+	OR					reduce	60
+	SUM					reduce	60
+	MINUS					reduce	60
+	RIGHTBR					reduce	60
+
+State 49
+	term -> STR . 
+
+	EQ					reduce	63
+	NEQ					reduce	63
+	AND					reduce	63
+	MUL					reduce	63
+	SEMICOLON					reduce	63
+	DIV					reduce	63
+	LT					reduce	63
+	GT					reduce	63
+	LEQ					reduce	63
+	COMMA					reduce	63
+	GEQ					reduce	63
+	RIGHTPAR					reduce	63
+	OR					reduce	63
+	SUM					reduce	63
+	MINUS					reduce	63
+	RIGHTBR					reduce	63
+
+State 50
+	term -> NUM . 
+
+	EQ					reduce	61
+	NEQ					reduce	61
+	AND					reduce	61
+	MUL					reduce	61
+	SEMICOLON					reduce	61
+	DIV					reduce	61
+	LT					reduce	61
+	GT					reduce	61
+	LEQ					reduce	61
+	COMMA					reduce	61
+	GEQ					reduce	61
+	RIGHTPAR					reduce	61
+	OR					reduce	61
+	SUM					reduce	61
+	MINUS					reduce	61
+	RIGHTBR					reduce	61
+
+State 51
+	term -> FNUM . 
+
+	EQ					reduce	62
+	NEQ					reduce	62
+	AND					reduce	62
+	MUL					reduce	62
+	SEMICOLON					reduce	62
+	DIV					reduce	62
+	LT					reduce	62
+	GT					reduce	62
+	LEQ					reduce	62
+	COMMA					reduce	62
+	GEQ					reduce	62
+	RIGHTPAR					reduce	62
+	OR					reduce	62
+	SUM					reduce	62
+	MINUS					reduce	62
+	RIGHTBR					reduce	62
+
+State 52
+	var -> ID . 
+	var -> ID . LEFTBR expression RIGHTBR 
+	call -> ID . LEFTPAR args RIGHTPAR 
+
+	EQ					reduce	36
+	AND					reduce	36
+	DIV					reduce	36
+	SEMICOLON					reduce	36
+	ASSIGN					reduce	36
+	LT					reduce	36
+	LEQ					reduce	36
+	GEQ					reduce	36
+	COMMA					reduce	36
+	LEFTPAR					shift	79
+	RIGHTBR					reduce	36
+	NEQ					reduce	36
+	MUL					reduce	36
+	GT					reduce	36
+	LEFTBR					shift	80
+	SUM					reduce	36
+	OR					reduce	36
+	RIGHTPAR					reduce	36
+	MINUS					reduce	36
+
+State 53
+	call -> PRINT . LEFTPAR print-ful-args RIGHTPAR 
+
+	LEFTPAR					shift	81
+
+State 54
+	cond-stmnt -> IF . LEFTPAR expression RIGHTPAR compound-stmnt ELSE compound-stmnt 
+
+	LEFTPAR					shift	82
+
+State 55
+	expression-stmnt -> SEMICOLON . 
+
+	ID					reduce	33
+	STR					reduce	33
+	IF					reduce	33
+	SEMICOLON					reduce	33
+	PRINT					reduce	33
+	NUM					reduce	33
+	STRING					reduce	33
+	FLOAT					reduce	33
+	INT					reduce	33
+	LEFTVILI					reduce	33
+	RETURN					reduce	33
+	LEFTPAR					reduce	33
+	WHILE					reduce	33
+	FNUM					reduce	33
+	RIGHTVILI					reduce	33
+
+State 56
+	term -> LEFTPAR . expression RIGHTPAR 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	PRINT					shift	53
+	var					goto	42
+	logical-expression					goto	44
+	NUM					shift	50
+	simple-expression					goto	43
+	expression					goto	83
+	LEFTPAR					shift	56
+	additive-expression					goto	45
+	FNUM					shift	51
+
+State 57
+	iter-stmnt -> WHILE . LEFTPAR expression RIGHTPAR compound-stmnt 
+
+	LEFTPAR					shift	84
+
+State 58
+	return-stmnt -> RETURN . SEMICOLON 
+	return-stmnt -> RETURN . expression SEMICOLON 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	SEMICOLON					shift	86
+	PRINT					shift	53
+	var					goto	42
+	logical-expression					goto	44
+	NUM					shift	50
+	simple-expression					goto	43
+	expression					goto	85
+	LEFTPAR					shift	56
+	additive-expression					goto	45
+	FNUM					shift	51
+
+State 59
+	compound-stmnt -> LEFTVILI stmnt-list RIGHTVILI . 
+
+	IF					reduce	19
+	SEMICOLON					reduce	19
+	EOF					reduce	19
+	FLOAT					reduce	19
+	ELSE					reduce	19
+	LEFTPAR					reduce	19
+	RETURN					reduce	19
+	LEFTVILI					reduce	19
+	FNUM					reduce	19
+	RIGHTVILI					reduce	19
+	ID					reduce	19
+	STR					reduce	19
+	PRINT					reduce	19
+	NUM					reduce	19
+	STRING					reduce	19
+	INT					reduce	19
+	WHILE					reduce	19
+
+State 60
+	var-declaration -> type-spec ID . LEFTBR NUM RIGHTBR SEMICOLON 
+	var-declaration -> type-spec ID . SEMICOLON 
+
+	LEFTBR					shift	16
+	SEMICOLON					shift	14
+
+State 61
+	expression-stmnt -> expression SEMICOLON . 
+
+	ID					reduce	32
+	STR					reduce	32
+	IF					reduce	32
+	SEMICOLON					reduce	32
+	PRINT					reduce	32
+	NUM					reduce	32
+	STRING					reduce	32
+	FLOAT					reduce	32
+	INT					reduce	32
+	LEFTVILI					reduce	32
+	RETURN					reduce	32
+	LEFTPAR					reduce	32
+	WHILE					reduce	32
+	FNUM					reduce	32
+	RIGHTVILI					reduce	32
+
+State 62
+	expression -> var ASSIGN . expression 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	PRINT					shift	53
+	var					goto	42
+	logical-expression					goto	44
+	NUM					shift	50
+	simple-expression					goto	43
+	expression					goto	87
+	LEFTPAR					shift	56
+	additive-expression					goto	45
+	FNUM					shift	51
+
+State 63
+	simple-expression -> logical-expression rel-op . logical-expression 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	PRINT					shift	53
+	var					goto	88
+	logical-expression					goto	89
+	NUM					shift	50
+	LEFTPAR					shift	56
+	additive-expression					goto	45
+	FNUM					shift	51
+
+State 64
+	logical-expression -> logical-expression log-op . additive-expression 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	PRINT					shift	53
+	var					goto	88
+	NUM					shift	50
+	LEFTPAR					shift	56
+	additive-expression					goto	90
+	FNUM					shift	51
+
+State 65
+	log-op -> OR . 
+
+	ID					reduce	49
+	STR					reduce	49
+	PRINT					reduce	49
+	LEFTPAR					reduce	49
+	NUM					reduce	49
+	FNUM					reduce	49
+
+State 66
+	log-op -> AND . 
+
+	ID					reduce	48
+	STR					reduce	48
+	PRINT					reduce	48
+	LEFTPAR					reduce	48
+	NUM					reduce	48
+	FNUM					reduce	48
+
+State 67
+	rel-op -> EQ . 
+
+	ID					reduce	44
+	STR					reduce	44
+	PRINT					reduce	44
+	LEFTPAR					reduce	44
+	NUM					reduce	44
+	FNUM					reduce	44
+
+State 68
+	rel-op -> NEQ . 
+
+	ID					reduce	45
+	STR					reduce	45
+	PRINT					reduce	45
+	LEFTPAR					reduce	45
+	NUM					reduce	45
+	FNUM					reduce	45
+
+State 69
+	rel-op -> GT . 
+
+	ID					reduce	40
+	STR					reduce	40
+	PRINT					reduce	40
+	LEFTPAR					reduce	40
+	NUM					reduce	40
+	FNUM					reduce	40
+
+State 70
+	rel-op -> LT . 
+
+	ID					reduce	41
+	STR					reduce	41
+	PRINT					reduce	41
+	LEFTPAR					reduce	41
+	NUM					reduce	41
+	FNUM					reduce	41
+
+State 71
+	rel-op -> GEQ . 
+
+	ID					reduce	42
+	STR					reduce	42
+	PRINT					reduce	42
+	LEFTPAR					reduce	42
+	NUM					reduce	42
+	FNUM					reduce	42
+
+State 72
+	rel-op -> LEQ . 
+
+	ID					reduce	43
+	STR					reduce	43
+	PRINT					reduce	43
+	LEFTPAR					reduce	43
+	NUM					reduce	43
+	FNUM					reduce	43
+
+State 73
+	additive-expression -> additive-expression add-op . mul-expression 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	91
+	call					goto	48
+	var					goto	88
+	PRINT					shift	53
+	NUM					shift	50
+	LEFTPAR					shift	56
+	FNUM					shift	51
+
+State 74
+	add-op -> SUM . 
+
+	ID					reduce	52
+	STR					reduce	52
+	PRINT					reduce	52
+	LEFTPAR					reduce	52
+	NUM					reduce	52
+	FNUM					reduce	52
+
+State 75
+	add-op -> MINUS . 
+
+	ID					reduce	53
+	STR					reduce	53
+	PRINT					reduce	53
+	LEFTPAR					reduce	53
+	NUM					reduce	53
+	FNUM					reduce	53
+
+State 76
+	mul-expression -> mul-expression mul-op . term 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	92
+	call					goto	48
+	var					goto	88
+	PRINT					shift	53
+	NUM					shift	50
+	LEFTPAR					shift	56
+	FNUM					shift	51
+
+State 77
+	mul-op -> MUL . 
+
+	ID					reduce	56
+	STR					reduce	56
+	PRINT					reduce	56
+	LEFTPAR					reduce	56
+	NUM					reduce	56
+	FNUM					reduce	56
+
+State 78
+	mul-op -> DIV . 
+
+	ID					reduce	57
+	STR					reduce	57
+	PRINT					reduce	57
+	LEFTPAR					reduce	57
+	NUM					reduce	57
+	FNUM					reduce	57
+
+State 79
+	call -> ID LEFTPAR . args RIGHTPAR 
+
+	term					goto	47
+	call					goto	48
+	var					goto	42
+	arg-list					goto	95
+	expression					goto	93
+	LEFTPAR					shift	56
+	FNUM					shift	51
+	ID					shift	52
+	STR					shift	49
+	mul-expression					goto	46
+	logical-expression					goto	44
+	PRINT					shift	53
+	NUM					shift	50
+	simple-expression					goto	43
+	RIGHTPAR					reduce	68
+	args					goto	94
+	additive-expression					goto	45
+
+State 80
+	var -> ID LEFTBR . expression RIGHTBR 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	PRINT					shift	53
+	var					goto	42
+	logical-expression					goto	44
+	NUM					shift	50
+	simple-expression					goto	43
+	expression					goto	96
+	LEFTPAR					shift	56
+	additive-expression					goto	45
+	FNUM					shift	51
+
+State 81
+	call -> PRINT LEFTPAR . print-ful-args RIGHTPAR 
+
+	STR					shift	98
+	print-ful-args					goto	97
+
+State 82
+	cond-stmnt -> IF LEFTPAR . expression RIGHTPAR compound-stmnt ELSE compound-stmnt 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	PRINT					shift	53
+	var					goto	42
+	logical-expression					goto	44
+	NUM					shift	50
+	simple-expression					goto	43
+	expression					goto	99
+	LEFTPAR					shift	56
+	additive-expression					goto	45
+	FNUM					shift	51
+
+State 83
+	term -> LEFTPAR expression . RIGHTPAR 
+
+	RIGHTPAR					shift	100
+
+State 84
+	iter-stmnt -> WHILE LEFTPAR . expression RIGHTPAR compound-stmnt 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	PRINT					shift	53
+	var					goto	42
+	logical-expression					goto	44
+	NUM					shift	50
+	simple-expression					goto	43
+	expression					goto	101
+	LEFTPAR					shift	56
+	additive-expression					goto	45
+	FNUM					shift	51
+
+State 85
+	return-stmnt -> RETURN expression . SEMICOLON 
+
+	SEMICOLON					shift	102
+
+State 86
+	return-stmnt -> RETURN SEMICOLON . 
+
+	ID					reduce	30
+	STR					reduce	30
+	IF					reduce	30
+	SEMICOLON					reduce	30
+	PRINT					reduce	30
+	NUM					reduce	30
+	STRING					reduce	30
+	FLOAT					reduce	30
+	INT					reduce	30
+	LEFTVILI					reduce	30
+	RETURN					reduce	30
+	LEFTPAR					reduce	30
+	WHILE					reduce	30
+	FNUM					reduce	30
+	RIGHTVILI					reduce	30
+
+State 87
+	expression -> var ASSIGN expression . 
+
+	COMMA					reduce	34
+	RIGHTPAR					reduce	34
+	SEMICOLON					reduce	34
+	RIGHTBR					reduce	34
+
+State 88
+	term -> var . 
+
+	EQ					reduce	59
+	NEQ					reduce	59
+	AND					reduce	59
+	MUL					reduce	59
+	SEMICOLON					reduce	59
+	DIV					reduce	59
+	LT					reduce	59
+	GT					reduce	59
+	LEQ					reduce	59
+	COMMA					reduce	59
+	GEQ					reduce	59
+	RIGHTPAR					reduce	59
+	OR					reduce	59
+	SUM					reduce	59
+	MINUS					reduce	59
+	RIGHTBR					reduce	59
+
+State 89
+	simple-expression -> logical-expression rel-op logical-expression . 
+	logical-expression -> logical-expression . log-op additive-expression 
+
+	log-op					goto	64
+	COMMA					reduce	38
+	AND					shift	66
+	OR					shift	65
+	RIGHTPAR					reduce	38
+	SEMICOLON					reduce	38
+	RIGHTBR					reduce	38
+
+State 90
+	logical-expression -> logical-expression log-op additive-expression . 
+	additive-expression -> additive-expression . add-op mul-expression 
+
+	EQ					reduce	46
+	NEQ					reduce	46
+	AND					reduce	46
+	SEMICOLON					reduce	46
+	LT					reduce	46
+	GT					reduce	46
+	LEQ					reduce	46
+	COMMA					reduce	46
+	GEQ					reduce	46
+	SUM					shift	74
+	RIGHTPAR					reduce	46
+	OR					reduce	46
+	add-op					goto	73
+	MINUS					shift	75
+	RIGHTBR					reduce	46
+
+State 91
+	additive-expression -> additive-expression add-op mul-expression . 
+	mul-expression -> mul-expression . mul-op term 
+
+	EQ					reduce	50
+	AND					reduce	50
+	SEMICOLON					reduce	50
+	DIV					shift	78
+	LT					reduce	50
+	LEQ					reduce	50
+	GEQ					reduce	50
+	COMMA					reduce	50
+	RIGHTBR					reduce	50
+	NEQ					reduce	50
+	MUL					shift	77
+	GT					reduce	50
+	SUM					reduce	50
+	OR					reduce	50
+	RIGHTPAR					reduce	50
+	MINUS					reduce	50
+	mul-op					goto	76
+
+State 92
+	mul-expression -> mul-expression mul-op term . 
+
+	EQ					reduce	54
+	NEQ					reduce	54
+	AND					reduce	54
+	MUL					reduce	54
+	SEMICOLON					reduce	54
+	DIV					reduce	54
+	LT					reduce	54
+	GT					reduce	54
+	LEQ					reduce	54
+	COMMA					reduce	54
+	GEQ					reduce	54
+	RIGHTPAR					reduce	54
+	OR					reduce	54
+	SUM					reduce	54
+	MINUS					reduce	54
+	RIGHTBR					reduce	54
+
+State 93
+	arg-list -> expression . 
+
+	COMMA					reduce	70
+	RIGHTPAR					reduce	70
+
+State 94
+	call -> ID LEFTPAR args . RIGHTPAR 
+
+	RIGHTPAR					shift	103
+
+State 95
+	args -> arg-list . 
+	arg-list -> arg-list . COMMA expression 
+
+	COMMA					shift	104
+	RIGHTPAR					reduce	67
+
+State 96
+	var -> ID LEFTBR expression . RIGHTBR 
+
+	RIGHTBR					shift	105
+
+State 97
+	call -> PRINT LEFTPAR print-ful-args . RIGHTPAR 
+
+	RIGHTPAR					shift	106
+
+State 98
+	print-ful-args -> STR . args 
+
+	term					goto	47
+	call					goto	48
+	var					goto	42
+	arg-list					goto	95
+	expression					goto	93
+	LEFTPAR					shift	56
+	FNUM					shift	51
+	ID					shift	52
+	STR					shift	49
+	mul-expression					goto	46
+	logical-expression					goto	44
+	PRINT					shift	53
+	NUM					shift	50
+	simple-expression					goto	43
+	RIGHTPAR					reduce	68
+	args					goto	107
+	additive-expression					goto	45
+
+State 99
+	cond-stmnt -> IF LEFTPAR expression . RIGHTPAR compound-stmnt ELSE compound-stmnt 
+
+	RIGHTPAR					shift	108
+
+State 100
+	term -> LEFTPAR expression RIGHTPAR . 
+
+	EQ					reduce	58
+	NEQ					reduce	58
+	AND					reduce	58
+	MUL					reduce	58
+	SEMICOLON					reduce	58
+	DIV					reduce	58
+	LT					reduce	58
+	GT					reduce	58
+	LEQ					reduce	58
+	COMMA					reduce	58
+	GEQ					reduce	58
+	RIGHTPAR					reduce	58
+	OR					reduce	58
+	SUM					reduce	58
+	MINUS					reduce	58
+	RIGHTBR					reduce	58
+
+State 101
+	iter-stmnt -> WHILE LEFTPAR expression . RIGHTPAR compound-stmnt 
+
+	RIGHTPAR					shift	109
+
+State 102
+	return-stmnt -> RETURN expression SEMICOLON . 
+
+	ID					reduce	31
+	STR					reduce	31
+	IF					reduce	31
+	SEMICOLON					reduce	31
+	PRINT					reduce	31
+	NUM					reduce	31
+	STRING					reduce	31
+	FLOAT					reduce	31
+	INT					reduce	31
+	LEFTVILI					reduce	31
+	RETURN					reduce	31
+	LEFTPAR					reduce	31
+	WHILE					reduce	31
+	FNUM					reduce	31
+	RIGHTVILI					reduce	31
+
+State 103
+	call -> ID LEFTPAR args RIGHTPAR . 
+
+	EQ					reduce	64
+	NEQ					reduce	64
+	AND					reduce	64
+	MUL					reduce	64
+	SEMICOLON					reduce	64
+	DIV					reduce	64
+	LT					reduce	64
+	GT					reduce	64
+	LEQ					reduce	64
+	COMMA					reduce	64
+	GEQ					reduce	64
+	RIGHTPAR					reduce	64
+	OR					reduce	64
+	SUM					reduce	64
+	MINUS					reduce	64
+	RIGHTBR					reduce	64
+
+State 104
+	arg-list -> arg-list COMMA . expression 
+
+	ID					shift	52
+	STR					shift	49
+	term					goto	47
+	mul-expression					goto	46
+	call					goto	48
+	PRINT					shift	53
+	var					goto	42
+	logical-expression					goto	44
+	NUM					shift	50
+	simple-expression					goto	43
+	expression					goto	110
+	LEFTPAR					shift	56
+	additive-expression					goto	45
+	FNUM					shift	51
+
+State 105
+	var -> ID LEFTBR expression RIGHTBR . 
+
+	EQ					reduce	37
+	AND					reduce	37
+	DIV					reduce	37
+	SEMICOLON					reduce	37
+	ASSIGN					reduce	37
+	LT					reduce	37
+	LEQ					reduce	37
+	GEQ					reduce	37
+	COMMA					reduce	37
+	RIGHTBR					reduce	37
+	NEQ					reduce	37
+	MUL					reduce	37
+	GT					reduce	37
+	SUM					reduce	37
+	OR					reduce	37
+	RIGHTPAR					reduce	37
+	MINUS					reduce	37
+
+State 106
+	call -> PRINT LEFTPAR print-ful-args RIGHTPAR . 
+
+	EQ					reduce	65
+	NEQ					reduce	65
+	AND					reduce	65
+	MUL					reduce	65
+	SEMICOLON					reduce	65
+	DIV					reduce	65
+	LT					reduce	65
+	GT					reduce	65
+	LEQ					reduce	65
+	COMMA					reduce	65
+	GEQ					reduce	65
+	RIGHTPAR					reduce	65
+	OR					reduce	65
+	SUM					reduce	65
+	MINUS					reduce	65
+	RIGHTBR					reduce	65
+
+State 107
+	print-ful-args -> STR args . 
+
+	RIGHTPAR					reduce	66
+
+State 108
+	cond-stmnt -> IF LEFTPAR expression RIGHTPAR . compound-stmnt ELSE compound-stmnt 
+
+	compound-stmnt					goto	111
+	LEFTVILI					shift	28
+
+State 109
+	iter-stmnt -> WHILE LEFTPAR expression RIGHTPAR . compound-stmnt 
+
+	compound-stmnt					goto	112
+	LEFTVILI					shift	28
+
+State 110
+	arg-list -> arg-list COMMA expression . 
+
+	COMMA					reduce	69
+	RIGHTPAR					reduce	69
+
+State 111
+	cond-stmnt -> IF LEFTPAR expression RIGHTPAR compound-stmnt . ELSE compound-stmnt 
+
+	ELSE					shift	113
+
+State 112
+	iter-stmnt -> WHILE LEFTPAR expression RIGHTPAR compound-stmnt . 
+
+	ID					reduce	29
+	STR					reduce	29
+	IF					reduce	29
+	SEMICOLON					reduce	29
+	PRINT					reduce	29
+	NUM					reduce	29
+	STRING					reduce	29
+	FLOAT					reduce	29
+	INT					reduce	29
+	LEFTVILI					reduce	29
+	RETURN					reduce	29
+	LEFTPAR					reduce	29
+	WHILE					reduce	29
+	FNUM					reduce	29
+	RIGHTVILI					reduce	29
+
+State 113
+	cond-stmnt -> IF LEFTPAR expression RIGHTPAR compound-stmnt ELSE . compound-stmnt 
+
+	compound-stmnt					goto	114
+	LEFTVILI					shift	28
+
+State 114
+	cond-stmnt -> IF LEFTPAR expression RIGHTPAR compound-stmnt ELSE compound-stmnt . 
+
+	ID					reduce	28
+	STR					reduce	28
+	IF					reduce	28
+	SEMICOLON					reduce	28
+	PRINT					reduce	28
+	NUM					reduce	28
+	STRING					reduce	28
+	FLOAT					reduce	28
+	INT					reduce	28
+	LEFTVILI					reduce	28
+	RETURN					reduce	28
+	LEFTPAR					reduce	28
+	WHILE					reduce	28
+	FNUM					reduce	28
+	RIGHTVILI					reduce	28
+

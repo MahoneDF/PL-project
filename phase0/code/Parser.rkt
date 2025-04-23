@@ -4,7 +4,7 @@
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)
 (require "Lexer.rkt")
-
+(provide (all-defined-out))
 (define our-parser (parser
     (start program)
     (end EOF)
@@ -25,8 +25,8 @@
             [(var-declaration) (list 'vardec $1)]
             [(fun-declaration) (list 'fundec $1)])
         (var-declaration
-            [(type-spec ID SEMICOLON) (list 'var-spec $1 $2)]
-            [(type-spec ID LEFTBR NUM RIGHTBR SEMICOLON) (list 'array-spec $1 $2 $4)])
+            [(type-spec ID LEFTBR NUM RIGHTBR SEMICOLON) (list 'array-spec $1 $2 $4)]
+            [(type-spec ID SEMICOLON) (list 'var-spec $1 $2)])
         (type-spec 
             [(INT) 'int]
             [(FLOAT) 'float]
@@ -40,14 +40,14 @@
             [(param-list COMMA param) (append $1 $3)]
             [(param) $1])
         (param
-            [(type-spec ID) (list (list 'argvar $1 $2))]
-            [(type-spec ID LEFTBR RIGHTBR) (list (list 'argarray $1 $2))])
+            [(type-spec ID LEFTBR RIGHTBR) (list (list 'argarray $1 $2))]
+            [(type-spec ID) (list (list 'argvar $1 $2))])
         (compound-stmnt
-            [(LEFTVILI local-dec stmnt-list RIGHTVILI) (list 'compound-stmnt $2 $3)])
-        (local-dec 
+            [(LEFTVILI stmnt-list RIGHTVILI) (list 'compound-stmnt $2)])
+        ; (local-dec 
             ; [(local-dec var-declaration) (append $1 (list $2))]
-            [(local-dec var-declaration) (append $1 (list $2))]
-            [() '()])
+            ; [(local-dec var-declaration) (append $1 (list $2))]
+            ; [() '()])
         (stmnt-list
             ; [(stmnt-list stmnt) (append $1 (list $2))]
             [(stmnt-list stmnt) (append $1 (list $2))]
@@ -57,12 +57,14 @@
             [(cond-stmnt) $1]
             [(iter-stmnt) $1]
             [(return-stmnt) $1]
-            [(expression-stmnt) $1])
+            [(expression-stmnt) $1]
+            [(var-declaration) $1])
         (cond-stmnt
-            [(IF LEFTPAR expression RIGHTPAR stmnt) (list 'if $3 $5)]
-            [(IF LEFTPAR expression RIGHTPAR stmnt ELSE stmnt) (list 'if $3 $5 'else $7)])
+            [(IF LEFTPAR expression RIGHTPAR compound-stmnt ELSE compound-stmnt) (list 'if $3 $5 'else $7)]
+            ; [(IF LEFTPAR expression RIGHTPAR stmnt) (list 'if $3 $5)])
+        )
         (iter-stmnt
-            [(WHILE LEFTPAR expression RIGHTPAR stmnt) (list 'while $3 $5)])
+            [(WHILE LEFTPAR expression RIGHTPAR compound-stmnt) (list 'while $3 $5)])
         (return-stmnt
             [(RETURN SEMICOLON) (list 'empty-return)]
             [(RETURN expression SEMICOLON) (list 'return $2)])
@@ -114,7 +116,7 @@
             [(ID LEFTPAR args RIGHTPAR) (list $1 $3)]
             [(PRINT LEFTPAR print-ful-args RIGHTPAR) (list 'print $3)])
         (print-ful-args
-            [(STRING args) (list 'string $2)])
+            [(STR args) (list 'string $1 $2)])
         (args
             [(arg-list) $1]
             [() '()])
@@ -123,44 +125,3 @@
             [(expression) (list $1)])
     )
 ))
-
-
-(define (test-parse input-string)
-  (let ([ip (open-input-string input-string)])
-    (with-handlers ([exn:fail? (lambda (exn) (printf "Error: ~a\n" (exn-message exn)))])
-      (let ([result (our-parser (lambda () (our-lexer ip)))])
-        (printf "AST: ~a\n" result)
-        result))))
-
-
-
-(test-parse "int main () {}")
-(test-parse "int main (int a, int b []) {}")
-(test-parse "int main (int a, int b []) {
-    int y;
-    int z;
-    int h;
-    x = y + 3;
-    z = ii - 1;
-    if (3 == 9) {d = y + 0;}
-    else {;}
-    return 0;
-    }")
-(test-parse "
-int main() {
-    int x;
-    float y;
-    x = 42;
-    y = 3.14;
-    if (x > 0) {
-        y = y * 2;
-    } else {
-        return 1;
-    }
-    while (y < 10) {
-        y = y + 1;
-    }
-    return x;
-}
-"
-  )
