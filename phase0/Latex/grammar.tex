@@ -6,6 +6,7 @@
 \author{Mobin Razavi, Ali Ahmadvand, Mohammad Davoodabadi}
 \date{}
 \maketitle
+Our grammar is based on C-minus grammar which you can find in \href{http://www.csci-snc.com/resources/ExamplesX/C-Syntax.pdf}{here}.
 \begin{enumerate}
     \item program $\rightarrow$ declaration-list
     \item declaration-list $\rightarrow$ declaration-list   declaration $|$ declaration
@@ -16,11 +17,10 @@
     \item params $\rightarrow$ param-list $|$ $\epsilon$ 
     \item param-list $\rightarrow$ param-list, param $|$ param
     \item param $\rightarrow$ type-spec ID $|$ type-spec ID [ ]
-    \item compound-stmnt $\rightarrow$ $\{$local-dec stmnt-list$\}$
-    \item local-dec $\rightarrow$ local-dec var-declaration $|$ $\epsilon$
+    \item compound-stmnt $\rightarrow$ $\{$stmnt-list$\}$
     \item stmnt-list $\rightarrow$ stmnt-list stmnt $|$ $\epsilon$
-    \item stmnt $\rightarrow$ compound-stmnt $|$ cond-stmnt $|$ iter-stmnt $|$ return-stmnt $|$ expression-stmnt
-    \item cond-stmnt $\rightarrow$ if (expression) stmnt  $|$ if (expression) stmnt else stmnt
+    \item stmnt $\rightarrow$ compound-stmnt $|$ cond-stmnt $|$ iter-stmnt $|$ return-stmnt $|$ expression-stmnt $|$ var-declaration
+    \item cond-stmnt $\rightarrow$ if (expression) stmnt  $|$ if (expression) compound-stmnt else compound-stmnt
     \item iter-stmnt $\rightarrow$ while (expression) compound-stmnt
     \item return-stmnt $\rightarrow$ return; $|$ return expression;
     \item expression-stmnt $\rightarrow$ expression; $|$ ;

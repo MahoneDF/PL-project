@@ -4,7 +4,7 @@
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)
 (require "Lexer.rkt")
-
+(provide (all-defined-out))
 (define our-parser (parser
     (start program)
     (end EOF)
@@ -43,11 +43,11 @@
             [(type-spec ID LEFTBR RIGHTBR) (list (list 'argarray $1 $2))]
             [(type-spec ID) (list (list 'argvar $1 $2))])
         (compound-stmnt
-            [(LEFTVILI local-dec stmnt-list RIGHTVILI) (list 'compound-stmnt $2 $3)])
-        (local-dec 
+            [(LEFTVILI stmnt-list RIGHTVILI) (list 'compound-stmnt $2)])
+        ; (local-dec 
             ; [(local-dec var-declaration) (append $1 (list $2))]
-            [(local-dec var-declaration) (append $1 (list $2))]
-            [() '()])
+            ; [(local-dec var-declaration) (append $1 (list $2))]
+            ; [() '()])
         (stmnt-list
             ; [(stmnt-list stmnt) (append $1 (list $2))]
             [(stmnt-list stmnt) (append $1 (list $2))]
@@ -57,13 +57,14 @@
             [(cond-stmnt) $1]
             [(iter-stmnt) $1]
             [(return-stmnt) $1]
-            [(expression-stmnt) $1])
+            [(expression-stmnt) $1]
+            [(var-declaration) $1])
         (cond-stmnt
-            [(IF LEFTPAR expression RIGHTPAR stmnt ELSE stmnt) (list 'if $3 $5 'else $7)]
+            [(IF LEFTPAR expression RIGHTPAR compound-stmnt ELSE compound-stmnt) (list 'if $3 $5 'else $7)]
             ; [(IF LEFTPAR expression RIGHTPAR stmnt) (list 'if $3 $5)])
         )
         (iter-stmnt
-            [(WHILE LEFTPAR expression RIGHTPAR stmnt) (list 'while $3 $5)])
+            [(WHILE LEFTPAR expression RIGHTPAR compound-stmnt) (list 'while $3 $5)])
         (return-stmnt
             [(RETURN SEMICOLON) (list 'empty-return)]
             [(RETURN expression SEMICOLON) (list 'return $2)])
@@ -124,44 +125,3 @@
             [(expression) (list $1)])
     )
 ))
-
-
-(define (test-parse input-string)
-  (let ([ip (open-input-string input-string)])
-    (with-handlers ([exn:fail? (lambda (exn) (printf "Error: ~a\n" (exn-message exn)))])
-      (let ([result (our-parser (lambda () (our-lexer ip)))])
-        (printf "AST: ~a\n" result)
-        result))))
-
-(test-parse "int salam (){} int main(int a, string b) {int x; print(\"what the hell\");}")
-; (test-parse "int a;")
-; (test-parse "int main () {}")
-; (test-parse "int main (int a, int b []) {}")
-(test-parse "int main (int a, int b []) {
-    int y;
-    int z;
-    int h;
-    x = y + 3;
-    z = ii - 1;
-    if (3 == 9) {d = y + 0;}
-    else {;}
-    return 0;
-    }")
-(test-parse "
-int main() {
-    int x;
-    float y;
-    x = 42;
-    y = 3.14;
-    if (x > 0) {
-        y = y * 2;
-    } else {
-        return 1;
-    }
-    while (y < 10) {
-        y = y + 1;
-    }
-    return x;
-}
-"
-  )
