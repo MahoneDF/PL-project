@@ -296,13 +296,21 @@
                    (value-of-statement conseq env)
                    (value-of-statement alt env)))
       (while-stmt (test body)
-                  (letrec ((loop (lambda ()
-                                   (if (expval->bool (value-of test env))
-                                       (begin
-                                         (value-of-statement body env)
-                                         (loop))
+                  ; (letrec ((loop (lambda ()
+                                  ;  (if (expval->bool (value-of test env))
+                                  ;      (begin
+                                  ;        (value-of-statement body env)
+                                  ;        (loop))
+                                  ;      (num-val 0)))))
+                  (letrec ((loop (lambda (curr-env)
+                                  (if (expval->bool (value-of test curr-env))
+                                       (let ((result (value-of-statement body curr-env)))
+                                         (if (pair? result)
+                                             (loop (cdr result))  ; Use updated environment
+                                             (loop curr-env)))
                                        (num-val 0)))))
-                    (loop)))
+                    ; (loop)))
+                    (loop env)))
       (return-stmt (exp)
                    (value-of exp env))
       (empty-return ()
@@ -310,17 +318,39 @@
       (expression-stmt (exp)
                        (value-of exp env))
       (empty-exp ()
-                 (num-val 0)))))
+                 (num-val 0))
+      (var-dec-stmt (var-decl)
+                    (let ((new-env (value-of-var-declaration var-decl env)))
+                       ;; Return both value and updated environment
+                       (cons (num-val 0) new-env)))))) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; (define value-of-statement-list
+;   (lambda (stmt-list env)
+;     (if (null? stmt-list)
+;         (num-val 0)
+;         (if (null? (cdr stmt-list))
+;             (value-of-statement (car stmt-list) env)
+;             (begin
+;               (value-of-statement (car stmt-list) env)
+;               (value-of-statement-list (cdr stmt-list) env))))))
 
 (define value-of-statement-list
   (lambda (stmt-list env)
     (if (null? stmt-list)
         (num-val 0)
         (if (null? (cdr stmt-list))
-            (value-of-statement (car stmt-list) env)
-            (begin
-              (value-of-statement (car stmt-list) env)
-              (value-of-statement-list (cdr stmt-list) env))))))
+            ;; Last statement
+            (let ((result (value-of-statement (car stmt-list) env)))
+              (if (pair? result)
+                  (car result)  ; Return value, discard environment
+                  result))
+            ;; Not last statement - thread environment through
+            (let ((result (value-of-statement (car stmt-list) env)))
+              (if (pair? result)
+                  ;; Statement returned updated environment
+                  (value-of-statement-list (cdr stmt-list) (cdr result))
+                  ;; Statement didn't change environment
+                  (value-of-statement-list (cdr stmt-list) env)))))))
 
 ;; =============================================================================
 ;; EXPRESSION EVALUATION
@@ -412,15 +442,8 @@
   (lambda (proc1 args env)
     (cases proc proc1
       (procedure (vars body saved-env)
-                ;  (displayln "5555")
-                ;  (displayln "5555")
-                ;  (displayln args)
                  (let ((new-env (extend-env* vars (map newref args) saved-env)))
                   ;  (value-of body new-env))))))
-                  ; (displayln "6666")
-                  ; (displayln new-env)
-                  ; (displayln "6666")
-                  ; (displayln args)
                   (value-of-statement body new-env))))))
 
 (define extend-env*
@@ -503,7 +526,8 @@
   (return-stmt (exp expression?))
   (empty-return)
   (expression-stmt (exp expression?))
-  (empty-exp))
+  (empty-exp)
+  (var-dec-stmt (var-decl var-declaration?)));;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-datatype expression expression?
   (const-exp (num number?))
@@ -618,7 +642,8 @@
 (define (convert-statement st)
   (match st
     [(list 'compound-stmnt stmts)
-     (compound-stmt (map convert-statement stmts))]
+     (compound-stmt (map convert-statement stmts))
+     ]
     [(list 'if test conseq 'else alt)
      (if-stmt (convert-expression test)
               (convert-statement conseq)
@@ -630,6 +655,9 @@
      (return-stmt (convert-expression exp))]
     [(list 'empty-return) (empty-return)]
     [(list 'empty-exp) (empty-exp)]
+    [(list 'var-spec type id) 
+    ;  (var-dec-stmt (var-spec type id))]
+     (var-dec-stmt (var-spec type id))]
     [exp
      (expression-stmt (convert-expression exp))]))
 
@@ -653,10 +681,18 @@
      (binary-op-exp op
                     (convert-expression lhs)
                     (convert-expression rhs))]
+    [(list lhs op rhs) #:when (symbol? op)
+     (binary-op-exp op
+                    (convert-expression lhs)
+                    (convert-expression rhs))]
     [(list op e) #:when (symbol? op)
      (unary-op-exp op (convert-expression e))]
     [id #:when (symbol? id)
-     (var-exp id)]))
+     (var-exp id)]
+    [(list id) #:when (symbol? id)
+     (var-exp id)]  ; Handle (a), (b) from parser's (var) rule
+    ; [(list inner-exp) (convert-expression inner-exp)]  ; Handle other parenthesized expressions
+    [_ (eopl:error 'convert-expression "Invalid expression: ~s" exp)]))
 
 ;; Convert variables
 (define (convert-variable v)
@@ -677,9 +713,9 @@
 
 ;; Example usage:
 ; (convert-parser-output '(program ((fundec (fun-dcl int main () (compound-stmt ()))))))
-(convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ())))))
+; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ())))))
 (run '(program (fundec (fun-dcl int main () (compound-stmnt ())))))
-(convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
+; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
 (run '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
 (convert-parser-output '(program (fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main () (compound-stmnt ((call (salam ())))))))))
 (convert-parser-output '(program (fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "sd" ()))))))))))
@@ -688,3 +724,8 @@
 ; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
 ; (run '(program (fundec (fun-dcl int main (param-list ((argvar int a) (argarray int b))) (compound-stmnt ())))))
 ; (collect-decls '(fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main (param-list ((argvar int a) (argvar string b))) (compound-stmnt ((var-spec int x) (call (print (string "what the hell" ())))))))))
+; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 2) (var-spec int b) (b = (a + 1)) (return b)))))))
+(run '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 7) (var-spec int b) (b = ((a) + 9)) (return (a))))))))
+(convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a)))))))
+(convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 3)))))))
+(run '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 3)))))))
