@@ -15,6 +15,8 @@
 (test-parse "int salam (){} int main(int a, string b) {int x; print(\"what the hell\");}")
 (test-parse "int a;")
 (test-parse "int main () {}")
+(test-parse "int main () {print(\"hello woooorld\");}")
+(test-parse "int salam (){} int main () {salam();}")
 (test-parse "int main (int a, int b []) {}")
 (test-parse "int main (int a, int b []) {
     int y;
