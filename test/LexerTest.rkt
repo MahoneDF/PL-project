@@ -3,7 +3,7 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)
-(require "Lexer.rkt")
+(require "../src/Lexer.rkt")
 
 (require rackunit)
 (define (lex-all port)
