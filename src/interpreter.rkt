@@ -362,6 +362,7 @@
       (const-exp (num) (num-val num))
       (const-float-exp (num) (num-val num))
       (const-string-exp (str) (string-val str))
+      (const-bool-exp (bool) (bool-val bool))
       (var-exp (var) (deref (apply-env env var)))
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; using thunks instead
       ; (var-exp (var) (let ((w (deref (apply-env env var)))))
@@ -531,6 +532,7 @@
   (const-exp (num number?))
   (const-float-exp (num number?))
   (const-string-exp (str string?))
+  (const-bool-exp (bool boolean?))
   (var-exp (var symbol?))
   (array-ref-exp (var symbol?) (index expression?))
   (assign-exp (var variable?) (exp expression?))
@@ -666,6 +668,8 @@
   (match exp
     [(? number? n) (const-exp n)]
     [(? string? s) (const-string-exp s)]
+    [(list 'True) (const-bool-exp #t)]
+    [(list 'False) (const-bool-exp #f)]
     [(list 'call (list 'print (list 'string fmt args)))
      (print-exp (const-string-exp fmt)
                 (map convert-expression args))]

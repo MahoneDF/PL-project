@@ -42,31 +42,17 @@ int main() {
 
 
 (define test2 "
-int compare (int x, int y) {
-if (x > y) {return x;}
-else {return y;}
-}
 int main() {
     int x;
-    x = 10;
-    int y;
-    y = 0;
-    while (x >= 0) {
-    int y;
-    y = 0;
-    y = y + 1;
-    x = x - 1;
-    }
-    int d;
-    d = 12 * 3 + 4 * 7 - 1 > 0 || 12 - 8 + 3 - 7 != 0;
-    return d;
+    x = True;
+    return x && False;
 }
 ")
 
 
 
-; (list-ref (list-ref (list-ref (do-parse test2) 1) 1) 2)
 ; (define temp (do-parse test2))
+; (list-ref (list-ref (list-ref (list-ref (list-ref (list-ref (do-parse test2) 1) 1) 4) 1) 1) 2)
 ; temp
 ; (do-parse test2)
 (run (do-parse test2))

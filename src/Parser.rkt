@@ -79,7 +79,11 @@
             [(ID LEFTBR expression RIGHTBR) (list $1 "[" $3 "]")])
         (simple-expression
             [(simple-expression log-op simple-expression) (list $1 $2 $3)]
-            [(logical-expression) $1])
+            [(logical-expression) $1]
+            [(temp-expression) $1])
+        (temp-expression
+         [(TRUE) (list 'True)]
+         [(FALSE) (list 'False)])
         (rel-op 
             [(GT) '>]
             [(LT) '<]
