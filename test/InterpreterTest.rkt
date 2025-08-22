@@ -45,7 +45,7 @@ int main() {
 int main() {
     int x;
     x = True;
-    return x && False;
+    return (True) && (((True))) || (False);
 }
 ")
 

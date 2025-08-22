@@ -689,6 +689,7 @@
      (binary-op-exp op
                     (convert-expression lhs)
                     (convert-expression rhs))]
+    [(list inner-exp) (convert-expression inner-exp)]
     [(list op e) #:when (symbol? op)
      (unary-op-exp op (convert-expression e))]
     [id #:when (symbol? id)
