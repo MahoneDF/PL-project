@@ -410,22 +410,20 @@
 
 (define apply-binary-op
   (lambda (op val1 val2)
-    (let ((num1 (expval->num val1))
-          (num2 (expval->num val2)))
       (case op
-        ((+) (num-val (+ num1 num2)))
-        ((-) (num-val (- num1 num2)))
-        ((*) (num-val (* num1 num2)))
-        ((/) (num-val (/ num1 num2)))
-        ((>) (bool-val (> num1 num2)))
-        ((<) (bool-val (< num1 num2)))
-        ((>=) (bool-val (>= num1 num2)))
-        ((<=) (bool-val (<= num1 num2)))
-        ((==) (bool-val (= num1 num2)))
-        ((!=) (bool-val (not (= num1 num2))))
+        ((+) (num-val (+ (expval->num val1) (expval->num val2))))
+        ((-) (num-val (- (expval->num val1) (expval->num val2))))
+        ((*) (num-val (* (expval->num val1) (expval->num val2))))
+        ((/) (num-val (/ (expval->num val1) (expval->num val2))))
+        ((>) (bool-val (> (expval->num val1) (expval->num val2))))
+        ((<) (bool-val (< (expval->num val1) (expval->num val2))))
+        ((>=) (bool-val (>= (expval->num val1) (expval->num val2))))
+        ((<=) (bool-val (<= (expval->num val1) (expval->num val2))))
+        ((==) (bool-val (= (expval->num val1) (expval->num val2))))
+        ((!=) (bool-val (not (= (expval->num val1) (expval->num val2)))))
         ((&&) (bool-val (and (expval->bool val1) (expval->bool val2))))
         ((||) (bool-val (or (expval->bool val1) (expval->bool val2))))
-        (else (eopl:error 'apply-binary-op "Unknown operator: ~s" op))))))
+        (else (eopl:error 'apply-binary-op "Unknown operator: ~s" op)))))
 
 (define apply-unary-op
   (lambda (op val)
@@ -658,6 +656,8 @@
     [(list 'var-spec type id) 
     ;  (var-dec-stmt (var-spec type id))]
      (var-dec-stmt (var-spec type id))]
+    [(list 'array-spec type id size)
+     (var-dec-stmt (array-spec type id (convert-expression size)))]
     [exp
      (expression-stmt (convert-expression exp))]))
 
@@ -714,18 +714,23 @@
 ;; Example usage:
 ; (convert-parser-output '(program ((fundec (fun-dcl int main () (compound-stmt ()))))))
 ; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ())))))
-(run '(program (fundec (fun-dcl int main () (compound-stmnt ())))))
+
+; (run '(program (fundec (fun-dcl int main () (compound-stmnt ()))))) ;wasn't commented
+
 ; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
-(run '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
-(convert-parser-output '(program (fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main () (compound-stmnt ((call (salam ())))))))))
-(convert-parser-output '(program (fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "sd" ()))))))))))
+
+; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))));wasn't commented
+; (convert-parser-output '(program (fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main () (compound-stmnt ((call (salam ())))))))));wasn't commented
+; (convert-parser-output '(program (fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "sd" ()))))))))));wasn't commented
+
 ; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((print (string "hello woooorld" ()))))))))
 ; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((print (string "hello woooorld" ()))))))))
 ; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
 ; (run '(program (fundec (fun-dcl int main (param-list ((argvar int a) (argarray int b))) (compound-stmnt ())))))
 ; (collect-decls '(fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main (param-list ((argvar int a) (argvar string b))) (compound-stmnt ((var-spec int x) (call (print (string "what the hell" ())))))))))
 ; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 2) (var-spec int b) (b = (a + 1)) (return b)))))))
-(run '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 7) (var-spec int b) (b = ((a) + 9)) (return (a))))))))
-(convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a)))))))
-(convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 3)))))))
-(run '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 3)))))))
+
+; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 7) (var-spec int b) (b = ((a) + 9)) (return (a))))))));wasn't commented
+; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a)))))));wasn't commented
+; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 3)))))));wasn't commented
+; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 3)))))));wasn't commented
