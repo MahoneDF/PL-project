@@ -1,10 +1,25 @@
 #lang racket
 (require eopl)
 
-;; C-Minus Interpreter
+;; C-Minus Interpreter with Enhanced Error Handling
 ;; Based on "Essentials of Programming Languages" style and conventions
 
 (provide (all-defined-out))
+
+;; =============================================================================
+;; ERROR HANDLING STRUCTURES
+;; =============================================================================
+
+(define-struct runtime-error (type line message) #:transparent)
+
+(define (raise-runtime-error type line message)
+  (raise (make-runtime-error type line message)))
+
+(define (format-error error)
+  (format "Line ~a: ~a - ~a" 
+          (runtime-error-line error)
+          (runtime-error-type error)
+          (runtime-error-message error)))
 
 ;; =============================================================================
 ;; DATA TYPES AND STRUCTURES
@@ -87,21 +102,27 @@
 (define deref
   (lambda (ref)
     (cases reference ref
-      (a-ref (pos) (list-ref the-store pos)))))
+      (a-ref (pos) 
+             (if (>= pos (length the-store))
+                 (raise-runtime-error "ReferenceError" 0 "Invalid reference")
+                 (list-ref the-store pos))))))
 
 (define setref!
   (lambda (ref val)
     (cases reference ref
       (a-ref (pos)
-             (set! the-store
-                   (letrec
-                     ((setref-inner
-                       (lambda (store1 ref1)
-                         (cond
-                           ((null? store1) (eopl:error 'setref "Invalid reference ~s" ref))
-                           ((zero? ref1) (cons val (cdr store1)))
-                           (else (cons (car store1) (setref-inner (cdr store1) (- ref1 1))))))))
-                     (setref-inner the-store pos)))))))
+             (if (>= pos (length the-store))
+                 (raise-runtime-error "ReferenceError" 0 "Invalid reference")
+                 (set! the-store
+                       (letrec
+                         ((setref-inner
+                           (lambda (store1 ref1)
+                             (cond
+                               ((null? store1) (raise-runtime-error "ReferenceError" 0 "Invalid reference"))
+                               ((zero? ref1) (cons val (cdr store1)))
+                               (else (cons (car store1) (setref-inner (cdr store1) (- ref1 1))))))))
+                         (setref-inner the-store pos))))))))
+
 ;; =============================================================================
 ;; ENVIRONMENT OPERATIONS  
 ;; =============================================================================
@@ -116,14 +137,14 @@
 (define init-env empty-env)
 
 (define apply-env
-  (lambda (env search-sym)
+  (lambda (env search-sym line)
     (cases environment env
       (empty-env ()
-                 (eopl:error 'apply-env "No binding for ~s" search-sym))
+                 (raise-runtime-error "NameError" line (format "Undefined variable: ~a" search-sym)))
       (extend-env (var val saved-env)
                   (if (eqv? search-sym var)
                       val
-                      (apply-env saved-env search-sym)))
+                      (apply-env saved-env search-sym line)))
       (extend-env-recursively (p-names b-vars p-bodies saved-env)
                               (let ((n (location search-sym p-names)))
                                 (if n
@@ -134,8 +155,7 @@
                                        (list-ref b-vars n)
                                        (list-ref p-bodies n)
                                        env)))
-                                    (apply-env saved-env search-sym))
-                                )
+                                    (apply-env saved-env search-sym line)))
                               ))))
 
 (define location
@@ -163,51 +183,41 @@
   (lambda (th)
     (cases thunk th
       (a-thunk (exp env) exp)
-      (evaluated-thunk (val) (eopl:error 'thunk->exp "Thunk already evaluated")))))
+      (evaluated-thunk (val) (raise-runtime-error "EvaluationError" 0 "Thunk already evaluated")))))
 
 ;; =============================================================================
 ;; EXPRESSED VALUE OPERATIONS
 ;; =============================================================================
 
 (define expval->num
-  (lambda (v)
+  (lambda (v line)
     (cases expval v
       (num-val (num) num)
-      ; (thunk-val (th) (expval->num (value-of-thunk th)))
-      (else (expval-extractor-error 'num v)))))
+      (else (raise-runtime-error "TypeError" line "Expected a number")))))
 
 (define expval->bool
-  (lambda (v)
+  (lambda (v line)
     (cases expval v
       (bool-val (bool) bool)
-      ; (thunk-val (th) (expval->bool (value-of-thunk th)))
-      (else (expval-extractor-error 'bool v)))))
+      (else (raise-runtime-error "TypeError" line "Expected a boolean")))))
 
 (define expval->string
-  (lambda (v)
+  (lambda (v line)
     (cases expval v
       (string-val (str) str)
-      ; (thunk-val (th) (expval->string (value-of-thunk th)))
-      (else (expval-extractor-error 'string v)))))
+      (else (raise-runtime-error "TypeError" line "Expected a string")))))
 
 (define expval->array
-  (lambda (v)
+  (lambda (v line)
     (cases expval v
       (array-val (arr) arr)
-      ; (thunk-val (th) (expval->array (value-of-thunk th)))
-      (else (expval-extractor-error 'array v)))))
+      (else (raise-runtime-error "TypeError" line "Expected an array")))))
 
 (define expval->proc
-  (lambda (v)
+  (lambda (v line)
     (cases expval v
       (proc-val (proc) proc)
-      ; (thunk-val (th) (expval->proc (value-of-thunk th)))
-      (else (expval-extractor-error 'proc v)))))
-
-(define expval-extractor-error
-  (lambda (variant value)
-    (eopl:error 'expval-extractors "Looking for a ~s, found ~s"
-                variant value)))
+      (else (raise-runtime-error "TypeError" line "Expected a function")))))
 
 ;; =============================================================================
 ;; TYPE OPERATIONS
@@ -219,7 +229,7 @@
       ((int) (num-val 0))
       ((float) (num-val 0.0))
       ((string) (string-val ""))
-      (else (eopl:error 'get-default-value "Unknown type ~s" type-spec)))))
+      (else (raise-runtime-error "TypeError" 0 (format "Unknown type ~s" type-spec))))))
 
 ;; =============================================================================
 ;; MAIN INTERPRETER FUNCTIONS
@@ -228,9 +238,10 @@
 (define value-of-program
   (lambda (pgm)
     (initialize-store!)
-    (cases program pgm
-      (a-program (decl-list)
-                 (value-of-declaration-list decl-list (init-env))))))
+    (with-handlers ([runtime-error? (lambda (err) (format-error err))])
+      (cases program pgm
+        (a-program (decl-list)
+                   (value-of-declaration-list decl-list (init-env)))))))
 
 (define value-of-declaration-list
   (lambda (decl-list env)
@@ -259,7 +270,7 @@
                 (let ((default-val (get-default-value type-spec)))
                   (extend-env id (newref default-val) env)))
       (array-spec (type-spec id size)
-                  (let* ((size-val (expval->num (value-of size env)))
+                  (let* ((size-val (expval->num (value-of size env (get-line-from size)) (get-line-from size)))
                          (default-val (get-default-value type-spec))
                          (array (make-vector size-val default-val)))
                     (extend-env id (newref (array-val array)) env))))))
@@ -277,12 +288,11 @@
                       (list param-names)
                       (list body)
                       env))
-                (let ((param-names (extract-param-names params)))
-                  (extend-env id
-                              (newref (proc-val (procedure param-names body env)))
-                              env)))
-               ))))
-                             
+                   (let ((param-names (extract-param-names params)))
+                     (extend-env id
+                                 (newref (proc-val (procedure param-names body env)))
+                                 env)))))))
+
 ; TODO: add recursive function definition
 (define is-fun-recursive
   (lambda (stmt fun-id)
@@ -314,7 +324,7 @@
     (cases statement stmnt
       (compound-stmt (stmt-lst) (check-stmnts-for-recursive-call stmt-lst fun-id))
       (if-stmt (test conseq alt) (or (does-stmnt-call-fun-id conseq fun-id)
-                        (or (does-exp-call-fun-id test fun-id) (does-stmnt-call-fun-id alt fun-id))))
+                                     (or (does-exp-call-fun-id test fun-id) (does-stmnt-call-fun-id alt fun-id))))
       (while-stmt (test body) 
                   (or (does-exp-call-fun-id test fun-id) (does-stmnt-call-fun-id body fun-id)))
       (return-stmt (exp) (does-exp-call-fun-id exp fun-id))
@@ -329,7 +339,7 @@
       (array-ref-exp (var index) (does-exp-call-fun-id index fun-id))
       (assign-exp (var exp1) (does-exp-call-fun-id exp1 fun-id))
       (binary-op-exp (op exp1 exp2) (or (does-exp-call-fun-id exp1 fun-id) (does-exp-call-fun-id exp2 fun-id)))
-      (unary-op-exp (op exp1) (does-exp-call-fun-id exp1))
+      (unary-op-exp (op exp1) (does-exp-call-fun-id exp1 fun-id))
       (call-exp (rator rands) (or (does-exp-call-fun-id rator fun-id)
                                   (does-expLst-call-fun-id rands fun-id)))
       (print-exp (format args) (or (does-exp-call-fun-id format fun-id)
@@ -339,8 +349,8 @@
 
 (define does-expLst-call-fun-id
   (lambda (exp-lst fun-id)
-   (if (equal? exp-lst (list)) #f 
-       (if (does-exp-call-fun-id (list-ref exp-lst 0) fun-id) #t
+    (if (equal? exp-lst (list)) #f 
+        (if (does-exp-call-fun-id (list-ref exp-lst 0) fun-id) #t
            (does-expLst-call-fun-id (cdr exp-lst) fun-id)
            )
       ;  #f
@@ -361,9 +371,9 @@
 
 (define find-and-call-main
   (lambda (env)
-    (let ((main-proc-ref (apply-env env 'main)))
-      (let ((main-proc (expval->proc (deref main-proc-ref))))
-        (apply-procedure main-proc '() env)))))
+    (let ((main-proc-ref (apply-env env 'main 0)))
+      (let ((main-proc (expval->proc (deref main-proc-ref) 0)))
+        (apply-procedure main-proc '() env 0)))))
 
 ;; =============================================================================
 ;; STATEMENT EVALUATION
@@ -375,7 +385,7 @@
       (compound-stmt (stmt-list)
                      (value-of-statement-list stmt-list env))
       (if-stmt (test conseq alt)
-               (if (expval->bool (value-of test env))
+               (if (expval->bool (value-of test env (get-line-from test)) (get-line-from test))
                    (value-of-statement conseq env)
                    (value-of-statement alt env)))
       (while-stmt (test body)
@@ -386,26 +396,26 @@
                                   ;        (loop))
                                   ;      (num-val 0)))))
                   (letrec ((loop (lambda (curr-env)
-                                  (if (expval->bool (value-of test curr-env))
-                                       (let ((result (value-of-statement body curr-env)))
-                                         (if (pair? result)
+                                  (if (expval->bool (value-of test curr-env (get-line-from test)) (get-line-from test))
+                                      (let ((result (value-of-statement body curr-env)))
+                                        (if (pair? result)
                                              (loop (cdr result))  ; Use updated environment
-                                             (loop curr-env)))
-                                       (num-val 0)))))
+                                            (loop curr-env)))
+                                      (num-val 0)))))
                     ; (loop)))
                     (loop env)))
       (return-stmt (exp)
-                   (value-of exp env))
+                   (value-of exp env (get-line-from exp)))
       (empty-return ()
                     (num-val 0))
       (expression-stmt (exp)
-                       (value-of exp env))
+                       (value-of exp env (get-line-from exp)))
       (empty-exp ()
                  (num-val 0))
       (var-dec-stmt (var-decl)
                     (let ((new-env (value-of-var-declaration var-decl env)))
                        ;; Return both value and updated environment
-                       (cons (num-val 0) new-env)))))) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                       (cons (num-val 0) new-env))))))
 
 ; (define value-of-statement-list
 ;   (lambda (stmt-list env)
@@ -440,13 +450,13 @@
 ;; =============================================================================
 
 (define value-of
-  (lambda (exp env)
+  (lambda (exp env line)
     (cases expression exp
       (const-exp (num) (num-val num))
       (const-float-exp (num) (num-val num))
       (const-string-exp (str) (string-val str))
       (const-bool-exp (bool) (bool-val bool))
-      (var-exp (var) (deref (apply-env env var)))
+      (var-exp (var) (deref (apply-env env var line)))
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; using thunks instead
       ; (var-exp (var) (let ((w (deref (apply-env env var)))))
       ;                   (if (expval? w)
@@ -457,35 +467,49 @@
       ;                           val1))))))
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       (array-ref-exp (var index)
-                     (let ((array (expval->array (deref (apply-env env var))))
-                           (idx (expval->num (value-of index env))))
-                       (vector-ref array idx)))
+                     (let ((array-ref (apply-env env var line))
+                           (idx-val (value-of index env line)))
+                       (let ((array (expval->array (deref array-ref) line))
+                             (idx (expval->num idx-val line)))
+                         (if (or (< idx 0) (>= idx (vector-length array)))
+                             (raise-runtime-error "IndexError" line 
+                                                  (format "Array index ~a out of bounds for array of size ~a" 
+                                                          idx (vector-length array)))
+                             (vector-ref array idx)))))
       (assign-exp (var exp)
-                  (let ((val (value-of exp env)))
+                  (let ((val (value-of exp env line)))
                     (cases variable var
                       (simple-var (id)
-                                  (setref! (apply-env env id) val)
+                                  (setref! (apply-env env id line) val)
                                   val)
                       (array-var (id index)
-                                 (let ((array (expval->array (deref (apply-env env id))))
-                                       (idx (expval->num (value-of index env))))
-                                   (vector-set! array idx val)
-                                   val)))))
+                                 (let ((array-ref (apply-env env id line))
+                                       (idx-val (value-of index env line)))
+                                   (let ((array (expval->array (deref array-ref) line))
+                                         (idx (expval->num idx-val line)))
+                                     (if (or (< idx 0) (>= idx (vector-length array)))
+                                         (raise-runtime-error "IndexError" line 
+                                                              (format "Array index ~a out of bounds for array of size ~a" 
+                                                                      idx (vector-length array)))
+                                         (begin
+                                           (vector-set! array idx val)
+                                           val))))))))
       (binary-op-exp (op exp1 exp2)
-                     (let ((val1 (value-of exp1 env))
-                           (val2 (value-of exp2 env)))
-                       (apply-binary-op op val1 val2)))
+                     (let ((val1 (value-of exp1 env line))
+                           (val2 (value-of exp2 env line)))
+                       (apply-binary-op op val1 val2 line)))
       (unary-op-exp (op exp)
-                    (let ((val (value-of exp env)))
-                      (apply-unary-op op val)))
+                    (let ((val (value-of exp env line)))
+                      (apply-unary-op op val line)))
       (call-exp (rator rands)
-                (let ((proc (expval->proc (value-of rator env)))
-                      (args (map (lambda (rand) (value-of rand env)) rands)))
-                  (apply-procedure proc args env)))
+                (let ((proc-val-exp (value-of rator env line))
+                      (args (map (lambda (rand) (value-of rand env line)) rands)))
+                  (let ((proc (expval->proc proc-val-exp line)))
+                    (apply-procedure proc args env line))))
       (print-exp (format-str args)
-                 (let ((str (expval->string (value-of format-str env)))
-                       (arg-vals (map (lambda (arg) (value-of arg env)) args)))
-                   (apply-print str arg-vals)
+                 (let ((str (expval->string (value-of format-str env line) line))
+                       (arg-vals (map (lambda (arg) (value-of arg env line)) args)))
+                   (apply-print str arg-vals line)
                    (string-val ""))))))
 
 ;; =============================================================================
@@ -493,45 +517,65 @@
 ;; =============================================================================
 
 (define apply-binary-op
-  (lambda (op val1 val2)
-      (case op
-        ((+) (num-val (+ (expval->num val1) (expval->num val2))))
-        ((-) (num-val (- (expval->num val1) (expval->num val2))))
-        ((*) (num-val (* (expval->num val1) (expval->num val2))))
-        ((/) (num-val (/ (expval->num val1) (expval->num val2))))
-        ((>) (bool-val (> (expval->num val1) (expval->num val2))))
-        ((<) (bool-val (< (expval->num val1) (expval->num val2))))
-        ((>=) (bool-val (>= (expval->num val1) (expval->num val2))))
-        ((<=) (bool-val (<= (expval->num val1) (expval->num val2))))
-        ((==) (bool-val (= (expval->num val1) (expval->num val2))))
-        ((!=) (bool-val (not (= (expval->num val1) (expval->num val2)))))
-        ((&&) (bool-val (and (expval->bool val1) (expval->bool val2))))
-        ((||) (bool-val (or (expval->bool val1) (expval->bool val2))))
-        (else (eopl:error 'apply-binary-op "Unknown operator: ~s" op)))))
+  (lambda (op val1 val2 line)
+    (case op
+      ((+) 
+       (num-val (+ (expval->num val1 line) (expval->num val2 line))))
+      ((-) 
+       (num-val (- (expval->num val1 line) (expval->num val2 line))))
+      ((*) 
+       (num-val (* (expval->num val1 line) (expval->num val2 line))))
+      ((/)
+       (let ((num2 (expval->num val2 line)))
+         (if (zero? num2)
+             (raise-runtime-error "DivisionError" line "Division by zero")
+             (num-val (/ (expval->num val1 line) num2)))))
+      ((>) 
+       (bool-val (> (expval->num val1 line) (expval->num val2 line))))
+      ((<) 
+       (bool-val (< (expval->num val1 line) (expval->num val2 line))))
+      ((>=) 
+       (bool-val (>= (expval->num val1 line) (expval->num val2 line))))
+      ((<=) 
+       (bool-val (<= (expval->num val1 line) (expval->num val2 line))))
+      ((==) 
+       (bool-val (= (expval->num val1 line) (expval->num val2 line))))
+      ((!=) 
+       (bool-val (not (= (expval->num val1 line) (expval->num val2 line)))))
+      ((&&) 
+       (bool-val (and (expval->bool val1 line) (expval->bool val2 line))))
+      ((||) 
+       (bool-val (or (expval->bool val1 line) (expval->bool val2 line))))
+      (else (raise-runtime-error "OperatorError" line (format "Unknown binary operator: ~s" op))))))
 
 (define apply-unary-op
-  (lambda (op val)
+  (lambda (op val line)
     (case op
-      ((-) (num-val (- (expval->num val))))
-      ((not) (bool-val (not (expval->bool val))))
-      (else (eopl:error 'apply-unary-op "Unknown unary operator: ~s" op)))))
+      ((-) (num-val (- (expval->num val line))))
+      ((not) (bool-val (not (expval->bool val line))))
+      (else (raise-runtime-error "OperatorError" line (format "Unknown unary operator: ~s" op))))))
 
 ;; =============================================================================
 ;; PROCEDURE APPLICATION
 ;; =============================================================================
 
 (define apply-procedure
-  (lambda (proc1 args env)
+  (lambda (proc1 args env line)
     (cases proc proc1
       (procedure (vars body saved-env)
-                 (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                  (value-of-statement body new-env)))
-      (rec-procedure (name vars body saved-env)
+                 (if (not (= (length vars) (length args)))
+                     (raise-runtime-error "ArityError" line 
+                                          (format "Function expects ~a arguments but got ~a" 
+                                                  (length vars) (length args)))
                      (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                       (value-of-statement body new-env)
-                         )
-      )
-      )))
+                       (value-of-statement body new-env))))
+      (rec-procedure (name vars body saved-env)
+                     (if (not (= (length vars) (length args)))
+                         (raise-runtime-error "ArityError" line 
+                                              (format "Function expects ~a arguments but got ~a" 
+                                                      (length vars) (length args)))
+                         (let ((new-env (extend-env* vars (map newref args) saved-env)))
+                           (value-of-statement body new-env)))))))
 
 (define extend-env*
   (lambda (vars vals env)
@@ -545,7 +589,7 @@
 ;; =============================================================================
 
 (define apply-print
-  (lambda (format-str args)
+  (lambda (format-str args line)
     (letrec ((print-helper
               (lambda (str arg-list)
                 (cond
@@ -553,18 +597,18 @@
                   ((string-contains str "~")
                    (let ((pos (string-index str #\~)))
                      (display (substring str 0 pos))
-                     (display (format-arg (car arg-list)))
+                     (display (format-arg (car arg-list) line))
                      (print-helper (substring str (+ pos 2)) (cdr arg-list))))
                   (else (displayln str))))))
       (print-helper format-str args))))
 
 (define format-arg
-  (lambda (val)
+  (lambda (val line)
     (cases expval val
       (num-val (n) (number->string n))
       (bool-val (b) (if b "true" "false"))
       (string-val (s) s)
-      (else "<?>"))))
+      (else (raise-runtime-error "TypeError" line "Cannot format value for printing")))))
 
 (define string-contains
   (lambda (str substr)
@@ -614,7 +658,7 @@
   (empty-return)
   (expression-stmt (exp expression?))
   (empty-exp)
-  (var-dec-stmt (var-decl var-declaration?)));;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (var-dec-stmt (var-decl var-declaration?)))
 
 (define-datatype expression expression?
   (const-exp (num number?))
@@ -633,31 +677,16 @@
   (simple-var (id symbol?))
   (array-var (id symbol?) (index expression?)))
 
-; ;; =============================================================================
-; ;; PARSER OUTPUT CONVERTER
-; ;; =============================================================================
+;; =============================================================================
+;; LINE NUMBER EXTRACTION (PLACEHOLDER)
+;; =============================================================================
 
-; ;; Convert parser output to internal AST representation
-; (define convert-parser-output
-;   (lambda (parser-output)
-;     (convert-program parser-output)))
-
-; (define convert-program
-;   (lambda (pgm)
-;     (cases list pgm
-;       ((program decl-list)
-;        (a-program (map convert-declaration decl-list))))))
-
-; (define convert-declaration
-;   (lambda (decl)
-;     (cases list decl
-;       ((vardec var-decl)
-;        (vardec-decl (convert-var-declaration var-decl)))
-;       ((fundec fun-decl)
-;        (fundec-decl (convert-fun-declaration fun-decl))))))
-
-; ;; Additional converter functions would be implemented here...
-
+;; This is a placeholder function - you'll need to modify your parser
+;; to include line number information in the AST
+(define (get-line-from ast-node)
+  ;; For now, return 0 as a placeholder
+  ;; You should modify your parser to include line numbers in the AST
+  0)
 
 ;; =============================================================================
 ;; PARSER OUTPUT CONVERTER
@@ -701,7 +730,7 @@
      (vardec-decl (convert-var-declaration var-decl))]
     [(list 'fundec fun-decl)
      (fundec-decl (convert-fun-declaration fun-decl))]
-    [_ (eopl:error 'convert-declaration "Invalid declaration: ~s" decl)]))
+    [_ (raise-runtime-error "SyntaxError" 0 "Invalid declaration")]))
 
 ;; Convert a variable declaration
 (define (convert-var-declaration vardecl)
@@ -709,7 +738,8 @@
     [(list 'var-spec type id)
      (var-spec type id)]
     [(list 'array-spec type id size)
-     (array-spec type id (convert-expression size))]))
+     (array-spec type id (convert-expression size))]
+    [_ (raise-runtime-error "SyntaxError" 0 "Invalid variable declaration")]))
 
 ;; Convert a function declaration
 (define (convert-fun-declaration fundecl)
@@ -717,26 +747,28 @@
     [(list 'fun-dcl type id params body)
      (fun-dcl type id
               (convert-params params)
-              (convert-statement body))]))
+              (convert-statement body))]
+    [_ (raise-runtime-error "SyntaxError" 0 "Invalid function declaration")]))
 
 ;; Convert params
 (define (convert-params params)
   (match params
     [(list 'param-list plist)
      (param-list (map convert-param plist))]
-    ['() (empty-params)]))
+    ['() (empty-params)]
+    [_ (raise-runtime-error "SyntaxError" 0 "Invalid parameter list")]))
 
 (define (convert-param p)
   (match p
     [(list 'argvar type id) (argvar type id)]
-    [(list 'argarray type id) (argarray type id)]))
+    [(list 'argarray type id) (argarray type id)]
+    [_ (raise-runtime-error "SyntaxError" 0 "Invalid parameter")]))
 
 ;; Convert statements
 (define (convert-statement st)
   (match st
     [(list 'compound-stmnt stmts)
-     (compound-stmt (map convert-statement stmts))
-     ]
+     (compound-stmt (map convert-statement stmts))]
     [(list 'if test conseq 'else alt)
      (if-stmt (convert-expression test)
               (convert-statement conseq)
@@ -754,7 +786,8 @@
     [(list 'array-spec type id size)
      (var-dec-stmt (array-spec type id (convert-expression size)))]
     [exp
-     (expression-stmt (convert-expression exp))]))
+     (expression-stmt (convert-expression exp))]
+    [_ (raise-runtime-error "SyntaxError" 0 "Invalid statement")]))
 
 ;; Convert expressions
 (define (convert-expression exp)
@@ -788,18 +821,16 @@
     [id #:when (symbol? id)
      (var-exp id)]
     [(list id) #:when (symbol? id)
-     (var-exp id)]  ; Handle (a), (b) from parser's (var) rule
-    ; [(list inner-exp) (convert-expression inner-exp)]  ; Handle other parenthesized expressions
-    [_ (eopl:error 'convert-expression "Invalid expression: ~s" exp)]))
+     (var-exp id)]
+    [_ (raise-runtime-error "SyntaxError" 0 "Invalid expression")]))
 
 ;; Convert variables
 (define (convert-variable v)
   (match v
     [(? symbol? id) (simple-var id)]
     [(list id "[" index "]")
-     (array-var id (convert-expression index))]))
-
-
+     (array-var id (convert-expression index))]
+    [_ (raise-runtime-error "SyntaxError" 0 "Invalid variable")]))
 
 ;; =============================================================================
 ;; MAIN INTERFACE
@@ -807,28 +838,5 @@
 
 (define run
   (lambda (parser-output)
-    (value-of-program (convert-parser-output parser-output))))
-
-;; Example usage:
-; (convert-parser-output '(program ((fundec (fun-dcl int main () (compound-stmt ()))))))
-; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ())))))
-
-; (run '(program (fundec (fun-dcl int main () (compound-stmnt ()))))) ;wasn't commented
-
-; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
-
-; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))));wasn't commented
-; (convert-parser-output '(program (fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main () (compound-stmnt ((call (salam ())))))))));wasn't commented
-; (convert-parser-output '(program (fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "sd" ()))))))))));wasn't commented
-
-; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((print (string "hello woooorld" ()))))))))
-; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((print (string "hello woooorld" ()))))))))
-; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((call (print (string "hello woooorld" ())))))))))
-; (run '(program (fundec (fun-dcl int main (param-list ((argvar int a) (argarray int b))) (compound-stmnt ())))))
-; (collect-decls '(fundec (fun-dcl int salam () (compound-stmnt ())) (fundec (fun-dcl int main (param-list ((argvar int a) (argvar string b))) (compound-stmnt ((var-spec int x) (call (print (string "what the hell" ())))))))))
-; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 2) (var-spec int b) (b = (a + 1)) (return b)))))))
-
-; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 7) (var-spec int b) (b = ((a) + 9)) (return (a))))))));wasn't commented
-; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a)))))));wasn't commented
-; (convert-parser-output '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 3)))))));wasn't commented
-; (run '(program (fundec (fun-dcl int main () (compound-stmnt ((var-spec int a) (a = 3)))))));wasn't commented
+    (with-handlers ([runtime-error? (lambda (err) (format-error err))])
+      (value-of-program (convert-parser-output parser-output)))))
