@@ -26,6 +26,13 @@
 
 
 (define test1 "
+int fac (int n) {
+if (n <= 1) {
+return 1;
+} else {
+return n * fac(n - 1);
+}
+}
 int main() {
     int x;
     float y;
@@ -36,7 +43,7 @@ int main() {
     } else {
         return 1;
     }
-    return x;
+    return fac(4);
 }
 ")
 
@@ -50,7 +57,7 @@ return glob;
 int main() {
 int glob;
 glob = 18;
-print(\"hello there mate!\" 12, 14);
+isGlobFine();
 return isGlobFine();
 }
 ")
@@ -60,8 +67,8 @@ return isGlobFine();
 ; (define temp (do-parse test2))
 ; (list-ref (list-ref (list-ref (list-ref (list-ref (list-ref (do-parse test2) 1) 1) 4) 1) 1) 2)
 ; temp
-; (do-parse test2)
-(run (do-parse test2))
+; (do-parse test1)
+(run (do-parse test1))
 ; (define temp (do-parse test1))
 ; temp
 

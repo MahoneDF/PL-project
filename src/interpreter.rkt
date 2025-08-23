@@ -19,8 +19,8 @@
    (saved-env environment?))
   (extend-env-recursively
    (proc-names (list-of symbol?))
-   (b-vars (list-of symbol?))
-   (proc-bodies (list-of expression?))
+   (b-vars (list-of(list-of symbol?)))
+   (proc-bodies (list-of  statement?))
    (saved-env environment?)))
 
 ;; Reference for mutable storage
@@ -43,7 +43,14 @@
    (bvars (list-of symbol?))
   ;  (body expression?)
    (body statement?)
-   (env environment?)))
+   (env environment?))
+  
+  (rec-procedure
+   (proc-name symbol?)
+   (bvars (list-of symbol?))
+   (body statement?)
+   (env environment?)
+   ))
 
 ;; Thunks for lazy evaluation
 (define-datatype thunk thunk?
@@ -122,11 +129,14 @@
                                 (if n
                                     (newref
                                      (proc-val
-                                      (procedure
+                                      (rec-procedure
+                                       (list-ref p-names n)
                                        (list-ref b-vars n)
                                        (list-ref p-bodies n)
                                        env)))
-                                    (apply-env saved-env search-sym)))))))
+                                    (apply-env saved-env search-sym))
+                                )
+                              ))))
 
 (define location
   (lambda (sym syms)
@@ -258,10 +268,83 @@
   (lambda (fun-decl env)
     (cases fun-declaration fun-decl
       (fun-dcl (type-spec id params body)
-               (let ((param-names (extract-param-names params)))
-                 (extend-env id
-                             (newref (proc-val (procedure param-names body env)))
-                             env))))))
+               ; check if it is a recursive function
+              ;  (display (statement? body))
+               (if (is-fun-recursive body id) 
+                   (let ((param-names (extract-param-names params)))
+                     (extend-env-recursively
+                      (list id)
+                      (list param-names)
+                      (list body)
+                      env))
+                (let ((param-names (extract-param-names params)))
+                  (extend-env id
+                              (newref (proc-val (procedure param-names body env)))
+                              env)))
+               ))))
+                             
+; TODO: add recursive function definition
+(define is-fun-recursive
+  (lambda (stmt fun-id)
+    ; (display fun-id)
+    ; #f
+    (cases statement stmt
+      (compound-stmt (stmnt-lst)
+                      (check-stmnts-for-recursive-call stmnt-lst fun-id)
+                    ;  #f
+                      )
+      (else #f))
+    )
+  )
+
+(define check-stmnts-for-recursive-call
+  (lambda (stmt-lst fun-id)
+    (if (equal? stmt-lst (list)) #f
+        (if (does-stmnt-call-fun-id (list-ref stmt-lst 0) fun-id) #t
+            (check-stmnts-for-recursive-call (cdr stmt-lst) fun-id))
+        ; #f
+        )))
+
+(define does-stmnt-call-fun-id
+  (lambda (stmnt fun-id)
+    ; (display "this is the stmnt:\n")
+    ; (display stmnt)
+    ; (display "\n")
+    ; (display "hello ")
+    (cases statement stmnt
+      (compound-stmt (stmt-lst) (check-stmnts-for-recursive-call stmt-lst fun-id))
+      (if-stmt (test conseq alt) (or (does-stmnt-call-fun-id conseq fun-id)
+                        (or (does-exp-call-fun-id test fun-id) (does-stmnt-call-fun-id alt fun-id))))
+      (while-stmt (test body) 
+                  (or (does-exp-call-fun-id test fun-id) (does-stmnt-call-fun-id body fun-id)))
+      (return-stmt (exp) (does-exp-call-fun-id exp fun-id))
+      (expression-stmt (exp) (does-exp-call-fun-id exp fun-id))
+      (else #f))))
+
+(define does-exp-call-fun-id
+  (lambda (exp fun-id)
+    ; (display "hello ")
+    (cases expression exp
+      (var-exp (var) (equal? var fun-id))
+      (array-ref-exp (var index) (does-exp-call-fun-id index fun-id))
+      (assign-exp (var exp1) (does-exp-call-fun-id exp1 fun-id))
+      (binary-op-exp (op exp1 exp2) (or (does-exp-call-fun-id exp1 fun-id) (does-exp-call-fun-id exp2 fun-id)))
+      (unary-op-exp (op exp1) (does-exp-call-fun-id exp1))
+      (call-exp (rator rands) (or (does-exp-call-fun-id rator fun-id)
+                                  (does-expLst-call-fun-id rands fun-id)))
+      (print-exp (format args) (or (does-exp-call-fun-id format fun-id)
+                                   (does-expLst-call-fun-id args fun-id)))
+      (else #f))
+    ))
+
+(define does-expLst-call-fun-id
+  (lambda (exp-lst fun-id)
+   (if (equal? exp-lst (list)) #f 
+       (if (does-exp-call-fun-id (list-ref exp-lst 0) fun-id) #t
+           (does-expLst-call-fun-id (cdr exp-lst) fun-id)
+           )
+      ;  #f
+       )))
 
 (define extract-param-names
   (lambda (params)
@@ -442,8 +525,13 @@
     (cases proc proc1
       (procedure (vars body saved-env)
                  (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                  ;  (value-of body new-env))))))
-                  (value-of-statement body new-env))))))
+                  (value-of-statement body new-env)))
+      (rec-procedure (name vars body saved-env)
+                     (let ((new-env (extend-env* vars (map newref args) saved-env)))
+                       (value-of-statement body new-env)
+                         )
+      )
+      )))
 
 (define extend-env*
   (lambda (vars vals env)
