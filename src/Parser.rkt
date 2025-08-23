@@ -20,7 +20,7 @@
             ; [(declaration-list declaration) (dclist $1 $2)]
             [(declaration-list declaration) (append $1 (list $2))]
             ; [(declaration) (decl $1)])
-            [(declaration) $1])
+            [(declaration) (list $1)])
         (declaration 
             [(var-declaration) (list 'vardec $1)]
             [(fun-declaration) (list 'fundec $1)])

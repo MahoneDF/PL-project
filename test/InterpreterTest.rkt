@@ -42,10 +42,16 @@ int main() {
 
 
 (define test2 "
+int glob;
+int isGlobFine() {
+glob = glob + 1;
+return glob;
+}
 int main() {
-    int x;
-    x = True;
-    return (True) && (((True))) || (False);
+int glob;
+glob = 18;
+print(\"hello there mate!\" 12, 14);
+return isGlobFine();
 }
 ")
 

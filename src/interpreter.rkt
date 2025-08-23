@@ -579,20 +579,25 @@
   (convert-program parser-output))
 
 ;; Helper
-(define (collect-decls dl)
-  (if (null? dl)
-      '()
-      (if (null? (cddr dl))
-          (cons (list (car dl) (cadr dl))
-                '())
-          (cons (list (car dl) (cadr dl))
-                (collect-decls (car (cddr dl)))))))
+; (define (collect-decls dl)
+;   ; (display (list-ref dl 3))
+;   ; (display dl)
+;   ; (display "\n")
+;   (if (null? dl)
+;       '()
+      ; (if (null? (cddr dl))
+      ;     (cons (list (car dl) (cadr dl))
+      ;           '())
+      ;     (cons (list (car dl) (cadr dl))
+      ;           (collect-decls (car (cddr dl)))))))
+                ; (collect-decls (cddr dl))))))
 
 ;; Convert a program
 (define (convert-program pgm)
   (match pgm
     [(list 'program decl-list)
-     (a-program (map convert-declaration (collect-decls decl-list)))]))
+    ;  (a-program (map convert-declaration (collect-decls decl-list)))]))
+     (a-program (map convert-declaration decl-list))]))
     ;  (a-program (convert-declaration-list decl-list))]))
 
 ; (define (convert-declaration-list decl-list)
