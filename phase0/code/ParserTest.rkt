@@ -51,3 +51,6 @@ int main() {
   )
 
 (test-parse "int multiDeclaration() {int a; print(\"salam be hame\"); int another_declaration;}")
+(test-parse "int main () {int a; a = 5; if (a > 3) {return a + 2;} else {return a - 4;}}")
+(test-parse "int main () {int a; a = 5; int i; i = 4; while (i > 0) {a = a * 2;} return a;}")
+(test-parse "int g (int x) {return x * 2;} int main () {int a; a = 5; return g(a);}")
