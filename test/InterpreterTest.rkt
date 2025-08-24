@@ -33,6 +33,7 @@ int main() {
     int x;
     float y;
     x = 42;
+    if (x == 10){}else{}
     y = 3.14;
     if (x > 0) {
         y = y * 2;
@@ -86,7 +87,8 @@ int main() {
 
 (define undefined-var-test "
 int main() {
-    x = 5;
+    int x;
+    x = x / 4;
     return x;
 }
 ")
@@ -163,10 +165,13 @@ int main() {
 (define array-type-error "
 int main() {
     int arr[3];
-    string x;
-    x = \"salam\";
-    arr[0] = x;
-    return x;
+    string x[3];
+    x[0] = \"salam\";
+    if (x[0] == \"sa\"){
+        print(\"sasdasda\n\");
+    }else{
+    }
+    return 0;
 }
 ")
 
@@ -329,46 +334,74 @@ int main() {
 (run (do-parse array))
 (newline)
 
-; (printf "Testing type error:\n")
-; (run (do-parse type-error-test))
-; (newline)
+(printf "Testing type error:\n")
+(run (do-parse type-error-test))
+(newline)
 
-; (printf "Testing undefined variable:\n")
-; (run (do-parse undefined-var-test))
-; (newline)
+(printf "Testing undefined variable:\n")
+(run (do-parse undefined-var-test))
+(newline)
 
-; (printf "Testing division by zero:\n")
-; (run (do-parse division-by-zero-test))
-; (newline)
+(printf "Testing division by zero:\n")
+(run (do-parse division-by-zero-test))
+(newline)
 
-; (printf "Testing index out of range:\n")
-; (run (do-parse index-out-of-range-test))
-; (newline)
+(printf "Testing index out of range:\n")
+(run (do-parse index-out-of-range-test))
+(newline)
 
-; (printf "Testing arity mismatch:\n")
-; (run (do-parse arity-mismatch-test))
-; (newline)
+(printf "Testing arity mismatch:\n")
+(run (do-parse arity-mismatch-test))
+(newline)
 
-; (printf "Testing array index type error:\n")
-; (run (do-parse array-index-type-error-test))
-; (newline)
+(printf "Testing array index type error:\n")
+(run (do-parse array-index-type-error-test))
+(newline)
 
-; (printf "Testing print format error:\n")
-; (run (do-parse print-format-error-test))
-; (newline)
+(printf "Testing print format error:\n")
+(run (do-parse print-format-error-test))
+(newline)
 
-; (printf "Testing function call type error:\n")
-; (run (do-parse function-call-type-error-test))
-; (newline)
+(printf "Testing function call type error:\n")
+(run (do-parse function-call-type-error-test))
+(newline)
 
-; (printf "Testing nested errors:\n")
-; (run (do-parse nested-error-test))
-; (newline)
+(printf "Testing nested errors:\n")
+(run (do-parse nested-error-test))
+(newline)
 
-; (printf "Testing array type errors:\n")
-; (run (do-parse array-type-error))
-; (newline)
+(printf "Testing array type errors:\n")
+(run (do-parse array-type-error))
+(newline)
 
-; (printf "Testing assignment type errors:\n")
-; (run (do-parse assignment-type-error))
-; (newline)
+(printf "Testing assignment type errors:\n")
+(run (do-parse assignment-type-error))
+(newline)
+
+
+int increment_all(int arr[], int size) {
+    int i;
+    i = 0;
+    while (i < size) {
+        arr[i] = arr[i] + 1;
+        i = i + 1;
+    }
+    return 0;
+}
+
+int process_array(int arr[], int size) {
+    increment_all(arr, size);
+    increment_all(arr, size);
+    return 0;
+}
+
+int main() {
+    int values[3];
+    values[0] = 10;
+    values[1] = 20;
+    values[2] = 30;
+    print("Initial: ~d ~d ~d", values[0], values[1], values[2]);
+    process_array(values, 3);
+    print("Final: ~d ~d ~d", values[0], values[1], values[2]);
+    return 0;
+}
