@@ -517,37 +517,60 @@
 ;; OPERATOR APPLICATION
 ;; =============================================================================
 
-(define apply-binary-op
-  (lambda (op val1 val2 line)
-    (case op
-      ((+) 
-       (num-val (+ (expval->num val1 line) (expval->num val2 line))))
-      ((-) 
-       (num-val (- (expval->num val1 line) (expval->num val2 line))))
-      ((*) 
-       (num-val (* (expval->num val1 line) (expval->num val2 line))))
-      ((/)
-       (let ((num2 (expval->num val2 line)))
-         (if (zero? num2)
-             (raise-runtime-error "DivisionError" line "Division by zero")
-             (num-val (/ (expval->num val1 line) num2)))))
-      ((>) 
-       (bool-val (> (expval->num val1 line) (expval->num val2 line))))
-      ((<) 
-       (bool-val (< (expval->num val1 line) (expval->num val2 line))))
-      ((>=) 
-       (bool-val (>= (expval->num val1 line) (expval->num val2 line))))
-      ((<=) 
-       (bool-val (<= (expval->num val1 line) (expval->num val2 line))))
-      ((==) 
-       (bool-val (= (expval->num val1 line) (expval->num val2 line))))
-      ((!=) 
-       (bool-val (not (= (expval->num val1 line) (expval->num val2 line)))))
-      ((&&) 
-       (bool-val (and (expval->bool val1 line) (expval->bool val2 line))))
-      ((||) 
-       (bool-val (or (expval->bool val1 line) (expval->bool val2 line))))
-      (else (raise-runtime-error "OperatorError" line (format "Unknown binary operator: ~s" op))))))
+(define (apply-binary-op op v1 v2 line)
+  (cases expval v1
+    (num-val (n1)
+      (cases expval v2
+        (num-val (n2)
+          (case op
+            [(+) (num-val (+ n1 n2))]
+            [(-) (num-val (- n1 n2))]
+            [(*) (num-val (* n1 n2))]
+            [(/) (if (= n2 0)
+                     (raise-runtime-error "DivideByZero" line "Division by zero")
+                     (num-val (/ n1 n2)))]
+            [(<)  (bool-val (< n1 n2))]
+            [(<=) (bool-val (<= n1 n2))]
+            [(>)  (bool-val (> n1 n2))]
+            [(>=) (bool-val (>= n1 n2))]
+            [(==) (bool-val (= n1 n2))]
+            [(!=) (bool-val (not (= n1 n2)))]
+            [else (raise-runtime-error "TypeError" line
+                      (format "Unsupported op ~a on numbers" op))]))
+        [else (raise-runtime-error "TypeError" line
+                 (format "Mismatched types: number ~a and ~a" n1 v2))]))
+
+    (string-val (s1)
+      (cases expval v2
+        (string-val (s2)
+          (case op
+            [(+)  (string-val (string-append s1 s2))]
+            [(==) (bool-val (string=? s1 s2))]
+            [(!=) (bool-val (not (string=? s1 s2)))]
+            [(<)  (bool-val (string<? s1 s2))]
+            [(<=) (bool-val (string<=? s1 s2))]
+            [(>)  (bool-val (string>? s1 s2))]
+            [(>=) (bool-val (string>=? s1 s2))]
+            [else (raise-runtime-error "TypeError" line
+                      (format "Unsupported op ~a on strings" op))]))
+        [else (raise-runtime-error "TypeError" line
+                 (format "Mismatched types: string ~a and ~a" s1 v2))]))
+
+    (bool-val (b1)
+      (cases expval v2
+        (bool-val (b2)
+          (case op
+            [(==) (bool-val (equal? b1 b2))]
+            [(!=) (bool-val (not (equal? b1 b2)))]
+            [(||) (bool-val (or b1 b2))]
+            [(&&) (bool-val (and b1 b2))]
+            [else (raise-runtime-error "TypeError" line
+                      (format "Unsupported op ~a on booleans" op))]))
+        [else (raise-runtime-error "TypeError" line
+                 (format "Mismatched types: boolean ~a and ~a" b1 v2))]))
+
+    [else (raise-runtime-error "TypeError" line
+             (format "Unsupported operand type for ~a: ~a" op v1))]))
 
 (define apply-unary-op
   (lambda (op val line)

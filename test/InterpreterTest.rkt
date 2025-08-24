@@ -323,6 +323,17 @@ int main() {
 }
 ")
 
+(define string-test "
+int main () {
+    string x;
+    string y;
+    x = \"salam\";
+    y = \"salam\";
+    print(\"~x\" x == y);
+    return 0;
+}
+")
+
 ;; Run the tests
 (run (do-parse chechkk))
 (newline)
@@ -343,6 +354,9 @@ int main() {
 (newline)
 
 (run (do-parse return_test))
+(newline)
+
+(run (do-parse string-test))
 (newline)
 
 ; (printf "Testing type error:\n")
