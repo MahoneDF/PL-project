@@ -127,12 +127,18 @@
 ;; ENVIRONMENT OPERATIONS  
 ;; =============================================================================
 
-; (define init-env
-;   (lambda ()
-;     (extend-env 'i (newref (num-val 1))
-;                 (extend-env 'v (newref (num-val 5))
-;                             (extend-env 'x (newref (num-val 10))
-;                                         (empty-env))))))
+(define (display-environment env)
+  (printf "---- Start of Environment ----\n")
+  (let loop ((env env))
+    (cases environment env
+      (empty-env () 
+        (printf "---- End of Environment ----\n"))
+      
+      (extend-env (var ref saved-env)
+        (printf "~a -> " var)
+        (displayln (deref ref))
+        (loop saved-env))
+      (else (displayln "88888888888888888888888888888888888888888")))))
 
 (define init-env empty-env)
 
@@ -417,16 +423,6 @@
                        ;; Return both value and updated environment
                        (cons (num-val 0) new-env))))))
 
-; (define value-of-statement-list
-;   (lambda (stmt-list env)
-;     (if (null? stmt-list)
-;         (num-val 0)
-;         (if (null? (cdr stmt-list))
-;             (value-of-statement (car stmt-list) env)
-;             (begin
-;               (value-of-statement (car stmt-list) env)
-;               (value-of-statement-list (cdr stmt-list) env))))))
-
 (define value-of-statement-list
   (lambda (stmt-list env)
     (if (null? stmt-list)
@@ -625,7 +621,7 @@
       (helper 0))))
 
 ;; =============================================================================
-;; GRAMMAR DEFINITIONS (matching your parser output)
+;; GRAMMAR DEFINITIONS (matching parser output)
 ;; =============================================================================
 
 (define-datatype program program?
@@ -781,7 +777,6 @@
     [(list 'empty-return) (empty-return)]
     [(list 'empty-exp) (empty-exp)]
     [(list 'var-spec type id) 
-    ;  (var-dec-stmt (var-spec type id))]
      (var-dec-stmt (var-spec type id))]
     [(list 'array-spec type id size)
      (var-dec-stmt (array-spec type id (convert-expression size)))]
@@ -801,12 +796,11 @@
                 (map convert-expression args))]
     [(list 'call (list id args))
      (call-exp (var-exp id) (map convert-expression args))]
-    ; [(list 'print (list 'string fmt args))
-    ;  (print-exp (const-string-exp fmt)
-    ;             (map convert-expression args))]
     [(list var '= rhs)
      (assign-exp (convert-variable var)
                  (convert-expression rhs))]
+    [(list id 'array-access index)
+     (array-ref-exp id (convert-expression index))]
     [(list op lhs rhs) #:when (symbol? op)
      (binary-op-exp op
                     (convert-expression lhs)
@@ -828,7 +822,7 @@
 (define (convert-variable v)
   (match v
     [(? symbol? id) (simple-var id)]
-    [(list id "[" index "]")
+    [(list id 'array-access index)
      (array-var id (convert-expression index))]
     [_ (raise-runtime-error "SyntaxError" 0 "Invalid variable")]))
 
@@ -840,3 +834,6 @@
   (lambda (parser-output)
     (with-handlers ([runtime-error? (lambda (err) (format-error err))])
       (value-of-program (convert-parser-output parser-output)))))
+
+(convert-parser-output '(program ((fundec (fun-dcl int main () (compound-stmnt ((array-spec int arr 4) ((arr array-access 0) = 2) (return ((arr array-access 0))))))))))
+(run '(program ((fundec (fun-dcl int main () (compound-stmnt ((array-spec int arr 4) ((arr array-access 0) = 2) (return ((arr array-access 0))))))))))

@@ -54,3 +54,19 @@ int main() {
 (test-parse "int main () {int a; a = 5; if (a > 3) {return a + 2;} else {return a - 4;}}")
 (test-parse "int main () {int a; a = 5; int i; i = 4; while (i > 0) {a = a * 2;} return a;}")
 (test-parse "int g (int x) {return x * 2;} int main () {int a; a = 5; return g(a);}")
+(test-parse "int g (int x) {return x * 2;} int main () {print(\"sdfsd\" x, y, z);}")
+(test-parse "int main(){
+    int n;
+    n = 7;
+    {
+        n = 99;
+        print(\"~x\" n);
+    }
+    print(\"~x\" n);
+}")
+(test-parse "int main() {
+    int arr[4];
+    arr[0] = 2;
+    return arr[0];
+}
+")

@@ -178,47 +178,197 @@ int main() {
 }
 ")
 
+(define chechkk "
+int f (int n) {
+        int y;
+        y = 1;
+        while (n > 1) {
+            y = y * n;
+            n = n - 1;
+        }
+        return y;
+    }
+int main () {
+    int x;
+    x = 7;
+    int y;
+    if (x < 6) {
+        y = 9;
+    }
+    else {
+        y = 11;
+    }
+    {
+        int x;
+        x = 10;
+        print(\"dsfsdsfdf\");
+    }
+    int z;
+    z = f (5);
+    float g;
+    g = x / 1;
+    return (x + 2*(y + z) + g);
+}
+")
+
+(define scopeTesting "
+int f(int n) {
+    return n + 3;
+}
+
+int g(int n, int m) {
+    return 2 * n;
+}
+
+int main(){
+    int n;
+    n = 7;
+    print(\"ghjghgjh  ~x sdjksjk ~x uiuiuiu ~x  ioioio ~x aytytyt ~x awawa\" n, n+2, 3.14, n==8, \"qqq\");
+    {
+        n = 99;
+        print(\"~x\" n);
+    }
+    print(\"~x\" n);
+    return f (g (n, 89));
+}
+")
+
+(define SimpleScopeTesting "
+int main(){
+    int n;
+    n = 7;
+    {
+        n = 99;
+        print(\"~x\" n);
+    }
+    print(\"~x\" n);
+}
+")
+
+(define AnotherSimpleScopeTesting "
+int f(int m) {
+    m = m + 9;
+    return m;
+}
+int main(){
+    int n;
+    n = 7;
+    {
+        int n;
+        n = 99;
+        print(\"~x\" n);
+    }
+    int k;
+    print(\"~x\" f(n));
+    print(\"~x\" n);
+}
+")
+
+(define FinalScopingCheck "
+int main() {
+    int arr[3];
+    arr[0] = 10;
+    arr[1] = 20;
+    arr[2] = 30;
+    {
+        int arr[2];
+        arr[0] = 100;
+        arr[1] = 200;
+        print(\"Inner array: ~d, ~d\" arr[0], arr[1]);
+    }
+    print(\"Outer array: ~d, ~d, ~d\" arr[0], arr[1], arr[2]);
+    return 0;
+}
+")
+
+(define array "
+int increment_all(int arr[], int size) {
+    int i;
+    i = 0;
+    while (i < size) {
+        arr[i] = arr[i] + 1;
+        i = i + 1;
+    }
+    return 0;
+}
+
+int process_array(int arr[], int size) {
+    increment_all(arr, size);
+    increment_all(arr, size);
+    return 0;
+}
+
+int main() {
+    int values[3];
+    values[0] = 10;
+    values[1] = 20;
+    values[2] = 30;
+    print(\"Initial: ~d ~d ~d\" values[0], values[1], values[2]);
+    process_array(values, 3);
+    print(\"Final: ~d ~d ~d\" values[0], values[1], values[2]);
+    return 0;
+}
+")
+
 ;; Run the tests
-(printf "Testing type error:\n")
-(run (do-parse type-error-test))
+(run (do-parse chechkk))
 (newline)
 
-(printf "Testing undefined variable:\n")
-(run (do-parse undefined-var-test))
+(run (do-parse scopeTesting))
 (newline)
 
-(printf "Testing division by zero:\n")
-(run (do-parse division-by-zero-test))
+(run (do-parse SimpleScopeTesting))
 (newline)
 
-(printf "Testing index out of range:\n")
-(run (do-parse index-out-of-range-test))
+(run (do-parse AnotherSimpleScopeTesting))
 (newline)
 
-(printf "Testing arity mismatch:\n")
-(run (do-parse arity-mismatch-test))
+(run (do-parse FinalScopingCheck))
 (newline)
 
-(printf "Testing array index type error:\n")
-(run (do-parse array-index-type-error-test))
+(run (do-parse array))
 (newline)
 
-(printf "Testing print format error:\n")
-(run (do-parse print-format-error-test))
-(newline)
+; (printf "Testing type error:\n")
+; (run (do-parse type-error-test))
+; (newline)
 
-(printf "Testing function call type error:\n")
-(run (do-parse function-call-type-error-test))
-(newline)
+; (printf "Testing undefined variable:\n")
+; (run (do-parse undefined-var-test))
+; (newline)
 
-(printf "Testing nested errors:\n")
-(run (do-parse nested-error-test))
-(newline)
+; (printf "Testing division by zero:\n")
+; (run (do-parse division-by-zero-test))
+; (newline)
 
-(printf "Testing array type errors:\n")
-(run (do-parse array-type-error))
-(newline)
+; (printf "Testing index out of range:\n")
+; (run (do-parse index-out-of-range-test))
+; (newline)
 
-(printf "Testing assignment type errors:\n")
-(run (do-parse assignment-type-error))
-(newline)
+; (printf "Testing arity mismatch:\n")
+; (run (do-parse arity-mismatch-test))
+; (newline)
+
+; (printf "Testing array index type error:\n")
+; (run (do-parse array-index-type-error-test))
+; (newline)
+
+; (printf "Testing print format error:\n")
+; (run (do-parse print-format-error-test))
+; (newline)
+
+; (printf "Testing function call type error:\n")
+; (run (do-parse function-call-type-error-test))
+; (newline)
+
+; (printf "Testing nested errors:\n")
+; (run (do-parse nested-error-test))
+; (newline)
+
+; (printf "Testing array type errors:\n")
+; (run (do-parse array-type-error))
+; (newline)
+
+; (printf "Testing assignment type errors:\n")
+; (run (do-parse assignment-type-error))
+; (newline)

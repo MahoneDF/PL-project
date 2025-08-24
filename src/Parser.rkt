@@ -76,7 +76,7 @@
             [(simple-expression) $1])
         (var
             [(ID) $1]
-            [(ID LEFTBR expression RIGHTBR) (list $1 "[" $3 "]")])
+            [(ID LEFTBR expression RIGHTBR) (list $1 'array-access $3)])
         (simple-expression
             [(simple-expression log-op simple-expression) (list $1 $2 $3)]
             [(logical-expression) $1]
