@@ -20,7 +20,7 @@
             ; [(declaration-list declaration) (dclist $1 $2)]
             [(declaration-list declaration) (append $1 (list $2))]
             ; [(declaration) (decl $1)])
-            [(declaration) $1])
+            [(declaration) (list $1)])
         (declaration 
             [(var-declaration) (list 'vardec $1)]
             [(fun-declaration) (list 'fundec $1)])
@@ -78,8 +78,12 @@
             [(ID) $1]
             [(ID LEFTBR expression RIGHTBR) (list $1 "[" $3 "]")])
         (simple-expression
-            [(logical-expression rel-op logical-expression) (list $1 $2 $3)]
-            [(logical-expression) $1])
+            [(simple-expression log-op simple-expression) (list $1 $2 $3)]
+            [(logical-expression) $1]
+            [(temp-expression) $1])
+        (temp-expression
+         [(TRUE) (list 'True)]
+         [(FALSE) (list 'False)])
         (rel-op 
             [(GT) '>]
             [(LT) '<]
@@ -88,19 +92,19 @@
             [(EQ) '==]
             [(NEQ) '!=])
         (logical-expression
-            [(logical-expression log-op additive-expression) (list $2 $1 $3)]
+            [(additive-expression rel-op additive-expression) (list $2 $1 $3)]
             [(additive-expression) $1])
         (log-op
             [(AND) '&&]
             [(OR) '||])
         (additive-expression
-            [(additive-expression add-op mul-expression) (list $1 $2 $3)]
+            [(additive-expression add-op additive-expression) (list $1 $2 $3)]
             [(mul-expression) $1])
         (add-op
             [(SUM) '+]
             [(MINUS) '-])
         (mul-expression
-            [(mul-expression mul-op term) (list $2 $1 $3)]
+            [(mul-expression mul-op mul-expression) (list $2 $1 $3)]
             [(term) $1])
         (mul-op
             [(MUL) '*]

@@ -2,8 +2,8 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)
-(require "Lexer.rkt")
-(require "Parser.rkt")
+(require "../src/Lexer.rkt")
+(require "../src/Parser.rkt")
 
 (define (test-parse input-string)
   (let ([ip (open-input-string input-string)])

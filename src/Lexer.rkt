@@ -47,7 +47,7 @@
     ["return" (token-RETURN)]
     [(:: "/*" (complement (:: any-string "*/" any-string)) "*/") (token-COMMENT)] ;comment
     [(:: "\"" (complement (:: any-string "\"" any-string)) "\"") (token-STR lexeme)] ;string
-    [(:: (:+ (char-range #\0 #\9))) (token-NUM lexeme)] ;int
-    [(:: (:+ (char-range #\0 #\9) #\. (:+ (char-range #\0 #\9)))) (token-FNUM lexeme)] ;float
-    [(:+ (:or (char-range #\a #\z) (char-range #\A #\Z) (char-range #\0 #\9) #\_)) (token-ID lexeme)]
+    [(:: (:+ (char-range #\0 #\9))) (token-NUM (string->number lexeme))] ;int
+    [(:: (:+ (char-range #\0 #\9) #\. (:+ (char-range #\0 #\9)))) (token-FNUM (string->number lexeme))] ;float
+    [(:+ (:or (char-range #\a #\z) (char-range #\A #\Z) (char-range #\0 #\9) #\_)) (token-ID (string->symbol lexeme))]
 ))
