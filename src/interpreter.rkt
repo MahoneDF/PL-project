@@ -834,6 +834,3 @@
   (lambda (parser-output)
     (with-handlers ([runtime-error? (lambda (err) (format-error err))])
       (value-of-program (convert-parser-output parser-output)))))
-
-(convert-parser-output '(program ((fundec (fun-dcl int main () (compound-stmnt ((array-spec int arr 4) ((arr array-access 0) = 2) (return ((arr array-access 0))))))))))
-(run '(program ((fundec (fun-dcl int main () (compound-stmnt ((array-spec int arr 4) ((arr array-access 0) = 2) (return ((arr array-access 0))))))))))
