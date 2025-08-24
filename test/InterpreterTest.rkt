@@ -86,7 +86,8 @@ int main() {
 
 (define undefined-var-test "
 int main() {
-    x = 5;
+    int x;
+    x = x / 4;
     return x;
 }
 ")
@@ -221,4 +222,203 @@ int main() {
 
 (printf "Testing assignment type errors:\n")
 (run (do-parse assignment-type-error))
+(newline)
+
+
+(define scoping-test "
+int main() {
+    int a;
+    a = 0;
+    int b;
+    b = 0;
+    while(b == 0){
+        a = a + 1;
+        b = 1;
+    }
+    return a;
+}
+")
+
+(run (do-parse scoping-test))
+(newline)
+; =====================================================================================
+
+(define p1 "
+int quotient(int a, int b){
+    if (a < b){
+        return 0;
+    }
+    else {
+        return quotient(a - b, b) + 1;
+    }
+}
+
+int reminder(int a, int b){
+    if (a < b){
+        return a;
+    }
+    else {
+        return reminder(a - b, b);
+    }
+}
+
+int length_number(int num){
+    int t;
+    t = 0;
+    while (num >= 1){
+        num = num / 10;
+        t = t + 1;
+    }
+    return t;
+}
+
+int power(int a, int n){
+    int solve;
+    solve = 1;
+    while (n != 0) {
+        solve = solve * a;
+        n = n - 1;
+    }
+    return solve;
+}
+
+int main(){
+    int n;
+    n = 0 - 1;
+    if (n < 0){
+        print(\"you should provide a non-negative nuⅿber!\n\");
+        return 0;
+    }
+    else{
+        int a;
+        int tmp;
+        tmp = 0;
+        int length;
+        length = length_number(n);
+        int i;
+        i = 1;
+        while(length != 0){
+            a = quotient(reminder(n, power(10, i)), power(10, i - 1));
+            tmp = tmp + a * power(10, length - 1);
+            length = length - 1;
+            i = i + 1;
+        }
+        return tmp;
+    }
+}
+")
+
+(run (do-parse p1))
+(newline)
+
+(define p2 "
+int quotient(int a, int b){
+    if (a < b){
+        return 0;
+    }
+    else {
+        return quotient(a - b, b) + 1;
+    }
+}
+
+int reminder(int a, int b){
+    if (a < b){
+        return a;
+    }
+    else {
+        return reminder(a - b, b);
+    }
+}
+
+int power(int a, int n){
+    int solve;
+    solve = 1;
+    while (n != 0) {
+        solve = solve * a;
+        n = n - 1;
+    }
+    return solve;
+}
+
+int convert_to_tenth_base(int n){
+    int num;
+    num = 0;
+    int i;
+    i = 0;
+    while (n != 0) {
+        num = num + power(2, i) * reminder(n, 10);
+        n = quotient(n, 10);
+        i = i + 1;
+    }
+
+    return num;
+}
+
+int main(){
+    int len_a;
+    len_a = 6;
+    int a[6];
+    a[0] = 7;
+    a[1] = 11;
+    a[2] = 20;
+    a[3] = 16;
+    a[4] = 14;
+    a[5] = 1;
+
+    int len_b;
+    len_b = 6;
+    int b[6];
+    b[0] = 111;
+    b[1] = 1011;
+    b[2] = 1100;
+    b[3] = 10000;
+    b[4] = 0;
+    b[5] = 10001001;
+
+    convert_to_tenth_base(b[5]);
+    int i;
+    i = 0;
+    int odd;
+    odd = 1;
+    int odd_check;
+    odd_check = 0;
+    int even;
+    even = 1;
+    int even_check;
+    even_check = 0;
+    int c;
+    int j;
+    while(i < len_b){
+        c = convert_to_tenth_base(b[i]);
+        j = 0;
+        while (j < len_a) {
+            if(c == a[j]){
+                if(reminder(c, 2) == 0){
+                    even_check = 1;
+                    even = even * c;
+                }else {
+                    odd_check = 1;
+                    odd = odd * c;
+                }
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+
+    if (even_check == 1 && odd_check == 1) {
+        return odd + even;
+    }
+    if (even_check == 1 && odd_check == 0) {
+        return even;
+    }
+    if (even_check == 0 && odd_check == 1) {
+        return odd;
+    }
+
+    return 0;
+}
+")
+
+(run (do-parse p2))
 (newline)
