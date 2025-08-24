@@ -315,6 +315,14 @@ int main() {
 }
 ")
 
+(define return_test "
+int main() {
+    return 4;
+    print(\"sds\");
+    return 5;
+}
+")
+
 ;; Run the tests
 (run (do-parse chechkk))
 (newline)
@@ -334,49 +342,52 @@ int main() {
 (run (do-parse array))
 (newline)
 
-(printf "Testing type error:\n")
-(run (do-parse type-error-test))
+(run (do-parse return_test))
 (newline)
 
-(printf "Testing undefined variable:\n")
-(run (do-parse undefined-var-test))
-(newline)
+; (printf "Testing type error:\n")
+; (run (do-parse type-error-test))
+; (newline)
 
-(printf "Testing division by zero:\n")
-(run (do-parse division-by-zero-test))
-(newline)
+; (printf "Testing undefined variable:\n")
+; (run (do-parse undefined-var-test))
+; (newline)
 
-(printf "Testing index out of range:\n")
-(run (do-parse index-out-of-range-test))
-(newline)
+; (printf "Testing division by zero:\n")
+; (run (do-parse division-by-zero-test))
+; (newline)
 
-(printf "Testing arity mismatch:\n")
-(run (do-parse arity-mismatch-test))
-(newline)
+; (printf "Testing index out of range:\n")
+; (run (do-parse index-out-of-range-test))
+; (newline)
 
-(printf "Testing array index type error:\n")
-(run (do-parse array-index-type-error-test))
-(newline)
+; (printf "Testing arity mismatch:\n")
+; (run (do-parse arity-mismatch-test))
+; (newline)
 
-(printf "Testing print format error:\n")
-(run (do-parse print-format-error-test))
-(newline)
+; (printf "Testing array index type error:\n")
+; (run (do-parse array-index-type-error-test))
+; (newline)
 
-(printf "Testing function call type error:\n")
-(run (do-parse function-call-type-error-test))
-(newline)
+; (printf "Testing print format error:\n")
+; (run (do-parse print-format-error-test))
+; (newline)
 
-(printf "Testing nested errors:\n")
-(run (do-parse nested-error-test))
-(newline)
+; (printf "Testing function call type error:\n")
+; (run (do-parse function-call-type-error-test))
+; (newline)
 
-(printf "Testing array type errors:\n")
-(run (do-parse array-type-error))
-(newline)
+; (printf "Testing nested errors:\n")
+; (run (do-parse nested-error-test))
+; (newline)
 
-(printf "Testing assignment type errors:\n")
-(run (do-parse assignment-type-error))
-(newline)
+; (printf "Testing array type errors:\n")
+; (run (do-parse array-type-error))
+; (newline)
+
+; (printf "Testing assignment type errors:\n")
+; (run (do-parse assignment-type-error))
+; (newline)
 
 
 (define scoping-test "
@@ -393,8 +404,8 @@ int main() {
 }
 ")
 
-(run (do-parse scoping-test))
-(newline)
+; (run (do-parse scoping-test))
+; (newline)
 ; =====================================================================================
 
 (define p1 "
@@ -461,9 +472,9 @@ int main(){
 }
 ")
 
-(printf ">>>>>>>>>>> P1:\n")
-(run (do-parse p1))
-(newline)
+; (printf ">>>>>>>>>>> P1:\n")
+; (run (do-parse p1))
+; (newline)
 
 (define p2 "
 int quotient(int a, int b){

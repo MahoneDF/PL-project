@@ -80,6 +80,9 @@
    (body expression?)
    (return-type symbol?)))
 
+;; Non-local exit for `return`
+(define-struct return-signal (value) #:transparent)
+
 ;; =============================================================================
 ;; STORE OPERATIONS
 ;; =============================================================================
@@ -411,9 +414,11 @@
                     ; (loop)))
                     (loop env)))
       (return-stmt (exp)
-                   (value-of exp env (get-line-from exp)))
+                  ;  (value-of exp env (get-line-from exp)))
+                  (raise (make-return-signal (value-of exp env (get-line-from exp)))))
       (empty-return ()
-                    (num-val 0))
+                    ; (num-val 0))
+                    (raise (make-return-signal (num-val 0))))
       (expression-stmt (exp)
                        (value-of exp env (get-line-from exp)))
       (empty-exp ()
@@ -564,14 +569,18 @@
                                           (format "Function expects ~a arguments but got ~a" 
                                                   (length vars) (length args)))
                      (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                       (value-of-statement body new-env))))
+                       (with-handlers ([return-signal?
+                               (lambda (rs) (return-signal-value rs))])
+                         (value-of-statement body new-env)))))
       (rec-procedure (name vars body saved-env)
                      (if (not (= (length vars) (length args)))
                          (raise-runtime-error "ArityError" line 
                                               (format "Function expects ~a arguments but got ~a" 
                                                       (length vars) (length args)))
                          (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                           (value-of-statement body new-env)))))))
+                           (with-handlers ([return-signal?
+                               (lambda (rs) (return-signal-value rs))])
+                             (value-of-statement body new-env))))))))    
 
 (define extend-env*
   (lambda (vars vals env)
