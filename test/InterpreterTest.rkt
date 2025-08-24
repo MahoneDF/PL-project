@@ -245,21 +245,20 @@ int main() {
 
 (define p1 "
 int quotient(int a, int b){
-    if (a < b){
-        return 0;
+    int q;
+    q = 0;
+    while (a >= b){
+        a = a - b;
+        q = q + 1;
     }
-    else {
-        return quotient(a - b, b) + 1;
-    }
+    return q;
 }
 
 int reminder(int a, int b){
-    if (a < b){
-        return a;
+    while (a >= b){
+        a = a - b;
     }
-    else {
-        return reminder(a - b, b);
-    }
+    return a;
 }
 
 int length_number(int num){
@@ -284,7 +283,7 @@ int power(int a, int n){
 
 int main(){
     int n;
-    n = 0 - 1;
+    n = 123310;
     if (n < 0){
         print(\"you should provide a non-negative nuⅿber!\n\");
         return 0;
@@ -308,26 +307,26 @@ int main(){
 }
 ")
 
+(printf ">>>>>>>>>>> P1:\n")
 (run (do-parse p1))
 (newline)
 
 (define p2 "
 int quotient(int a, int b){
-    if (a < b){
-        return 0;
+    int q;
+    q = 0;
+    while (a >= b){
+        a = a - b;
+        q = q + 1;
     }
-    else {
-        return quotient(a - b, b) + 1;
-    }
+    return q;
 }
 
 int reminder(int a, int b){
-    if (a < b){
-        return a;
+    while (a >= b){
+        a = a - b;
     }
-    else {
-        return reminder(a - b, b);
-    }
+    return a;
 }
 
 int power(int a, int n){
@@ -357,7 +356,7 @@ int convert_to_tenth_base(int n){
 int main(){
     int len_a;
     len_a = 6;
-    int a[6];
+    int a[len_a];
     a[0] = 7;
     a[1] = 11;
     a[2] = 20;
@@ -367,7 +366,7 @@ int main(){
 
     int len_b;
     len_b = 6;
-    int b[6];
+    int b[len_b];
     b[0] = 111;
     b[1] = 1011;
     b[2] = 1100;
@@ -420,5 +419,6 @@ int main(){
 }
 ")
 
-(run (do-parse p2))
-(newline)
+; (printf ">>>>>>>>>>> P2:\n")
+; (run (do-parse p2))
+; (newline)

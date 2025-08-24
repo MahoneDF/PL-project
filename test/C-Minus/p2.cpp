@@ -3,21 +3,19 @@
 
 
 int quotient(int a, int b){
-    if (a < b){
-        return 0;
+    int q = 0;
+    while (a >= b){
+        a = a - b;
+        q = q + 1;
     }
-    else {
-        return quotient(a - b, b) + 1;
-    }
+    return q;
 }
 
 int reminder(int a, int b){
-    if (a < b){
-        return a;
+    while (a >= b){
+        a = a - b;
     }
-    else {
-        return reminder(a - b, b);
-    }
+    return a;
 }
 
 int power(int a, int n){
@@ -35,9 +33,7 @@ int convert_to_tenth_base(int n){
     num = 0;
     int i;
     i = 0;
-    printf("salam\n");
     while (n != 0) {
-        printf("%d\n" ,quotient(n, 10));
         num = num + power(2, i) * reminder(n, 10);
         n = quotient(n, 10);
         i = i + 1;
