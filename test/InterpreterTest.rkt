@@ -379,29 +379,328 @@ int main() {
 (newline)
 
 
-int increment_all(int arr[], int size) {
+(define scoping-test "
+int main() {
+    int a;
+    a = 0;
+    int b;
+    b = 0;
+    while(b == 0){
+        a = a + 1;
+        b = 1;
+    }
+    return a;
+}
+")
+
+(run (do-parse scoping-test))
+(newline)
+; =====================================================================================
+
+(define p1 "
+int quotient(int a, int b){
+    int q;
+    q = 0;
+    while (a >= b){
+        a = a - b;
+        q = q + 1;
+    }
+    return q;
+}
+
+int reminder(int a, int b){
+    while (a >= b){
+        a = a - b;
+    }
+    return a;
+}
+
+int length_number(int num){
+    int t;
+    t = 0;
+    while (num >= 1){
+        num = num / 10;
+        t = t + 1;
+    }
+    return t;
+}
+
+int power(int a, int n){
+    int solve;
+    solve = 1;
+    while (n != 0) {
+        solve = solve * a;
+        n = n - 1;
+    }
+    return solve;
+}
+
+int main(){
+    int n;
+    n = 123310;
+    if (n < 0){
+        print(\"you should provide a non-negative nuⅿber!\n\");
+        return 0;
+    }
+    else{
+        int a;
+        int tmp;
+        tmp = 0;
+        int length;
+        length = length_number(n);
+        int i;
+        i = 1;
+        while(length != 0){
+            a = quotient(reminder(n, power(10, i)), power(10, i - 1));
+            tmp = tmp + a * power(10, length - 1);
+            length = length - 1;
+            i = i + 1;
+        }
+        return tmp;
+    }
+}
+")
+
+(printf ">>>>>>>>>>> P1:\n")
+(run (do-parse p1))
+(newline)
+
+(define p2 "
+int quotient(int a, int b){
+    int q;
+    q = 0;
+    while (a >= b){
+        a = a - b;
+        q = q + 1;
+    }
+    return q;
+}
+
+int reminder(int a, int b){
+    while (a >= b){
+        a = a - b;
+    }
+    return a;
+}
+
+int power(int a, int n){
+    int solve;
+    solve = 1;
+    while (n != 0) {
+        solve = solve * a;
+        n = n - 1;
+    }
+    return solve;
+}
+
+int convert_to_tenth_base(int n){
+    int num;
+    num = 0;
     int i;
     i = 0;
-    while (i < size) {
-        arr[i] = arr[i] + 1;
+    while (n != 0) {
+        num = num + power(2, i) * reminder(n, 10);
+        n = quotient(n, 10);
         i = i + 1;
+    }
+
+    return num;
+}
+
+int main(){
+    int len_a;
+    len_a = 6;
+    int a[len_a];
+    a[0] = 7;
+    a[1] = 11;
+    a[2] = 20;
+    a[3] = 16;
+    a[4] = 14;
+    a[5] = 1;
+
+    int len_b;
+    len_b = 6;
+    int b[len_b];
+    b[0] = 111;
+    b[1] = 1011;
+    b[2] = 1100;
+    b[3] = 10000;
+    b[4] = 0;
+    b[5] = 10001001;
+
+    convert_to_tenth_base(b[5]);
+    int i;
+    i = 0;
+    int odd;
+    odd = 1;
+    int odd_check;
+    odd_check = 0;
+    int even;
+    even = 1;
+    int even_check;
+    even_check = 0;
+    int c;
+    int j;
+    while(i < len_b){
+        c = convert_to_tenth_base(b[i]);
+        j = 0;
+        while (j < len_a) {
+            if(c == a[j]){
+                if(reminder(c, 2) == 0){
+                    even_check = 1;
+                    even = even * c;
+                }else {
+                    odd_check = 1;
+                    odd = odd * c;
+                }
+            } else {
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+
+    if (even_check == 1 && odd_check == 1) {
+        return odd + even;
+    }else{
+    }
+    if (even_check == 1 && odd_check == 0) {
+        return even;
+    }else{
+    }
+    if (even_check == 0 && odd_check == 1) {
+        return odd;
+    }else{
+    }
+
+    return 0;
+}
+")
+
+; (printf ">>>>>>>>>>> P2:\n")
+; (run (do-parse p2))
+; (newline)
+
+(define p3 "
+int main(){
+    string board[36];
+    board[0] = \"-\";
+    board[1] = \"-\";
+    board[2] = \"X\";
+    board[3] = \"X\";
+    board[4] = \"X\";
+    board[5] = \"X\";
+    board[6] = \"O\";
+    board[7] = \"O\";
+    board[8] = \"-\";
+    board[9] = \"-\";
+    board[10] = \"-\";
+    board[11] = \"-\";
+    board[12] = \"O\";
+    board[13] = \"-\";
+    board[14] = \"-\";
+    board[15] = \"-\";
+    board[16] = \"-\";
+    board[17] = \"-\";
+    board[18] = \"O\";
+    board[19] = \"-\";
+    board[20] = \"-\";
+    board[21] = \"O\";
+    board[22] = \"-\";
+    board[23] = \"-\";
+    board[24] = \"O\";
+    board[25] = \"-\";
+    board[26] = \"-\";
+    board[27] = \"-\";
+    board[28] = \"-\";
+    board[29] = \"-\";
+    board[30] = \"-\";
+    board[31] = \"-\";
+    board[32] = \"-\";
+    board[33] = \"-\";
+    board[34] = \"-\";
+    board[35] = \"-\";
+
+    int i;
+    i = 0;
+    int j;
+    int x_win;
+    x_win = 0;
+    int y_win;
+    y_win = 0;
+    while(i < 3){
+        j = 0;
+        while (j < 6) {
+            if (board[6*j + i] == \"X\" && board[6*j + i + 1] == \"X\" && board[6*j + i + 2] == \"X\" && board[6*j + i + 3] == \"X\"){
+                x_win = 1;
+            }else{
+            }
+
+            if (board[6*j + i] == \"O\" && board[6*j + i + 1] == \"O\" && board[6*j + i + 2] == \"O\" && board[6*j + i + 3] == \"O\"){
+                y_win = 1;
+            }else{
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+
+    j = 0;
+    while(j < 3){
+        i = 0;
+        while (i < 6) {
+            if (board[6*j + i] == \"X\" && board[6*j + i + 6] == \"X\" && board[6*j + i + 12] == \"X\" && board[6*j + i + 18] == \"X\"){
+                x_win = 1;
+            }else{
+            }
+
+            if (board[6*j + i] == \"O\" && board[6*j + i + 6] == \"O\" && board[6*j + i + 12] == \"O\" && board[6*j + i + 18] == \"O\"){
+                y_win = 1;
+            }else{
+            }
+            i = i + 1;
+        }
+        j = j + 1;
+    }
+
+    j = 0;
+    while(j < 3){
+        i = 0;
+        while (i < 3) {
+            if (board[6*j + i] == \"X\" && board[6*j + i + 6 + 1] == \"X\" && board[6*j + i + 12 + 1] == \"X\" && board[6*j + i + 18 + 1] == \"X\"){
+                x_win = 1;
+            }else{
+            }
+
+            if (board[6*j + i] == \"O\" && board[6*j + i + 6 + 1] == \"O\" && board[6*j + i + 12 + 2] == \"O\" && board[6*j + i + 18 + 3] == \"O\"){
+                y_win = 1;
+            }else{
+            }
+            i = i + 1;
+        }
+        j = j + 1;
+    }
+
+    if (x_win == 1 && y_win == 1){
+        print(\"Somebody Cheated!\n\");
+    }else{
+    }
+    if (x_win == 1 && y_win == 0){
+        print(\"X wins!\n\");
+    }else{
+    }
+    if (x_win == 0 && y_win == 1){
+        print(\"Y wins!\n\");
+    }else{
+    }
+    if (x_win == 0 && y_win == 0){
+        print(\"Draw!\n\");
+    }else{
     }
     return 0;
 }
+")
 
-int process_array(int arr[], int size) {
-    increment_all(arr, size);
-    increment_all(arr, size);
-    return 0;
-}
-
-int main() {
-    int values[3];
-    values[0] = 10;
-    values[1] = 20;
-    values[2] = 30;
-    print("Initial: ~d ~d ~d", values[0], values[1], values[2]);
-    process_array(values, 3);
-    print("Final: ~d ~d ~d", values[0], values[1], values[2]);
-    return 0;
-}
+; (printf ">>>>>>>>>>> P3:\n")
+; (run (do-parse p3))
+; (newline)
