@@ -23,6 +23,8 @@
 
 (define test1 "
 int fac (int n) {
+print(\"sdsdsds\");
+print(\"sdsdsds ~x\" n);
 if (n <= 1) {
 return 1;
 } else {
@@ -40,6 +42,7 @@ int main() {
     } else {
         return 1;
     }
+    print(\"fuccccccck\");
     return fac(4);
 }
 ")
@@ -65,7 +68,9 @@ return isGlobFine();
 ; (list-ref (list-ref (list-ref (list-ref (list-ref (list-ref (do-parse test2) 1) 1) 4) 1) 1) 2)
 ; temp
 ; (do-parse test1)
+(displayln "fuuuuuuuuck")
 (run (do-parse test1))
+(displayln "fuuuuuuuuck")
 ; (define temp (do-parse test1))
 ; temp
 
@@ -165,13 +170,10 @@ int main() {
 (define array-type-error "
 int main() {
     int arr[3];
-    string x[3];
-    x[0] = \"salam\";
-    if (x[0] == \"sa\"){
-        print(\"sasdasda\n\");
-    }else{
-    }
-    return 0;
+string x;
+x = \"salam\";
+arr[0] = x;
+return x;
 }
 ")
 
@@ -442,49 +444,49 @@ int main () {
 (run (do-parse string-array))
 (newline)
 
-; (printf "Testing type error:\n")
-; (run (do-parse type-error-test))
-; (newline)
+(printf "Testing type error:\n")
+(run (do-parse type-error-test))
+(newline)
 
-; (printf "Testing undefined variable:\n")
-; (run (do-parse undefined-var-test))
-; (newline)
+(printf "Testing undefined variable:\n")
+(run (do-parse undefined-var-test))
+(newline)
 
-; (printf "Testing division by zero:\n")
-; (run (do-parse division-by-zero-test))
-; (newline)
+(printf "Testing division by zero:\n")
+(run (do-parse division-by-zero-test))
+(newline)
 
-; (printf "Testing index out of range:\n")
-; (run (do-parse index-out-of-range-test))
-; (newline)
+(printf "Testing index out of range:\n")
+(run (do-parse index-out-of-range-test))
+(newline)
 
-; (printf "Testing arity mismatch:\n")
-; (run (do-parse arity-mismatch-test))
-; (newline)
+(printf "Testing arity mismatch:\n")
+(run (do-parse arity-mismatch-test))
+(newline)
 
-; (printf "Testing array index type error:\n")
-; (run (do-parse array-index-type-error-test))
-; (newline)
+(printf "Testing array index type error:\n")
+(run (do-parse array-index-type-error-test))
+(newline)
 
-; (printf "Testing print format error:\n")
-; (run (do-parse print-format-error-test))
-; (newline)
+(printf "Testing print format error:\n")
+(run (do-parse print-format-error-test))
+(newline)
 
-; (printf "Testing function call type error:\n")
-; (run (do-parse function-call-type-error-test))
-; (newline)
+(printf "Testing function call type error:\n")
+(run (do-parse function-call-type-error-test))
+(newline)
 
-; (printf "Testing nested errors:\n")
-; (run (do-parse nested-error-test))
-; (newline)
+(printf "Testing nested errors:\n")
+(run (do-parse nested-error-test))
+(newline)
 
-; (printf "Testing array type errors:\n")
-; (run (do-parse array-type-error))
-; (newline)
+(printf "Testing array type errors:\n")
+(run (do-parse array-type-error))
+(newline)
 
-; (printf "Testing assignment type errors:\n")
-; (run (do-parse assignment-type-error))
-; (newline)
+(printf "Testing assignment type errors:\n")
+(run (do-parse assignment-type-error))
+(newline)
 
 
 (define scoping-test "

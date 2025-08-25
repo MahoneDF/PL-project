@@ -40,14 +40,15 @@
 
 ;; Reference for mutable storage
 (define-datatype reference reference?
-  (a-ref (position integer?)))
+
+  (a-ref (position integer?) (type-name string?)))
 
 ;; Expressed values
 (define-datatype expval expval?
   (num-val (value number?))
   (bool-val (value boolean?))
-  (string-val (value string?)) 
-  (array-val (value vector?))
+  (string-val (value string?))
+  (array-val (value vector?) (type-name string?))
   (proc-val (procedure proc?))
   (thunk-val (thunk thunk?))
   (char-val (value char=?)))
@@ -98,12 +99,12 @@
   (lambda (val)
     (let ((next-ref (length the-store)))
       (set! the-store (append the-store (list val)))
-      (a-ref next-ref))))
+      (a-ref next-ref (get-type val))))) 
 
 (define deref
   (lambda (ref)
     (cases reference ref
-      (a-ref (pos) 
+      (a-ref (pos type-name) 
              (if (>= pos (length the-store))
                  (raise-runtime-error "ReferenceError" 0 "Invalid reference")
                  (list-ref the-store pos))))))
@@ -111,7 +112,7 @@
 (define setref!
   (lambda (ref val)
     (cases reference ref
-      (a-ref (pos)
+      (a-ref (pos type-name)
              (if (>= pos (length the-store))
                  (raise-runtime-error "ReferenceError" 0 "Invalid reference")
                  (set! the-store
@@ -121,6 +122,9 @@
                              (cond
                                ((null? store1) (raise-runtime-error "ReferenceError" 0 "Invalid reference"))
                                ((zero? ref1) (cons val (cdr store1)))
+                              ;  ((zero? ref1) (if (equal? type-name (get-type val)) 
+                              ;                    (cons val (cdr store1))
+                              ;                    (raise-runtime-error "MismatchError" 0 "Mismatch type for assignment.")))
                                (else (cons (car store1) (setref-inner (cdr store1) (- ref1 1))))))))
                          (setref-inner the-store pos))))))))
 
@@ -233,8 +237,8 @@
 (define expval->array
   (lambda (v line)
     (cases expval v
-      (array-val (arr) arr)
-      (string-val (str) (list->vector (map (lambda (ch) (char-val ch)) (string->list str))))  
+      (array-val (arr type-name) arr)
+      (string-val (str) (list->vector (map (lambda (ch) (char-val ch)) (string->list str))))
       (else (raise-runtime-error "TypeError" line "Expected an array")))))
 
 (define expval->proc
@@ -254,6 +258,16 @@
       ((float) (num-val 0.0))
       ((string) (string-val ""))
       (else (raise-runtime-error "TypeError" 0 (format "Unknown type ~s" type-spec))))))
+
+(define get-type
+  (lambda (exp)
+    (cases expval exp
+      (num-val (num) "num-val")
+      (bool-val (bool) "bool-val")
+      (string-val (str) "string-val")
+      (array-val (arr type-name) type-name)
+      (proc-val (proc) "proc-val")
+      (else "undefined"))))
 
 ;; =============================================================================
 ;; MAIN INTERPRETER FUNCTIONS
@@ -287,7 +301,7 @@
       (vardec-decl (var-decl) (value-of-var-declaration var-decl env))
       (fundec-decl (fun-decl) (value-of-fun-declaration fun-decl env)))))
 
-(define value-of-var-declaration
+(define value-of-var-declaration 
   (lambda (var-decl env)
     (cases var-declaration var-decl
       (var-spec (type-spec id)
@@ -297,7 +311,7 @@
                   (let* ((size-val (expval->num (value-of size env (get-line-from size)) (get-line-from size)))
                          (default-val (get-default-value type-spec))
                          (array (make-vector size-val default-val)))
-                    (extend-env id (newref (array-val array)) env))))))
+                    (extend-env id (newref (array-val array (get-type (get-default-value type-spec)))) env))))))
 
 (define value-of-fun-declaration
   (lambda (fun-decl env)
@@ -497,24 +511,42 @@
                   ; (let ((val-thunk (a-thunk exp env)))
                     (cases variable var
                       (simple-var (id)
+                        (let ((var-ref (apply-env env id line)))
+                          (cases reference var-ref
+                            (a-ref (pos type-name) 
+                              (if (equal? type-name (get-type val))
                                   (setref! (apply-env env id line) val)
+                                  (raise-runtime-error "TypeError" 0 
+                                    (format "Expected ~a, got ~a" type-name (get-type val)))
+                                  )))
+                          ; (setref! (apply-env env id line) val)
+                        )
                                   val)
                                   ; (setref! (apply-env env id line) val-thunk)
                                   ; val-thunk)
                       (array-var (id index)
                                  (let ((array-ref (apply-env env id line))
                                        (idx-val (value-of index env line)))
-                                   (let ((array (expval->array (deref array-ref) line))
-                                         (idx (expval->num idx-val line)))
-                                     (if (or (< idx 0) (>= idx (vector-length array)))
-                                         (raise-runtime-error "IndexError" line 
-                                                              (format "Array index ~a out of bounds for array of size ~a" 
-                                                                      idx (vector-length array)))
-                                         (begin
-                                           (vector-set! array idx val)                 ;;;;;;;; add string char change ;;;=============================================
-                                          ;  (vector-set! array idx val-thunk)
-                                           val))))))))
-                                          ;  val-thunk))))))))
+                                   (let ((array-ref-dereffed (deref array-ref)))
+                                    (let ((array (expval->array array-ref-dereffed line))
+                                          (idx (expval->num idx-val line)))
+                                      (if (or (< idx 0) (>= idx (vector-length array)))
+                                          (raise-runtime-error "IndexError" line 
+                                            (format "Array index ~a out of bounds for array of size ~a" 
+                                                    idx (vector-length array)))
+                                          (cases expval array-ref-dereffed
+                                            (array-val (pos type-name) 
+                                              (if (equal? type-name (get-type val))
+                                              (begin
+                                                (vector-set! array idx val) 
+                                                val)
+                                              (raise-runtime-error "TypeError" 0 
+                                                (format "Expected ~a, got ~a" type-name (get-type val)))
+                                                  ))
+                                            (else (raise-runtime-error "ReferenceError" 0 "Couldn't deref array."))
+                                            )
+                                          )))))))
+                                     )
       (binary-op-exp (op exp1 exp2)
                      ;; Short Circuit Implementation
                      (let ((val1 (value-of exp1 env line)))
@@ -620,6 +652,8 @@
 
 (define apply-procedure
   (lambda (proc1 args env line)
+    (displayln "iuiuiuiuiu")
+    (displayln args)
     (cases proc proc1
       (procedure (vars body saved-env)
                  (if (not (= (length vars) (length args)))
@@ -631,6 +665,7 @@
                                (lambda (rs) (return-signal-value rs))])
                          (value-of-statement body new-env)))))
       (rec-procedure (name vars body saved-env)
+                     (displayln "iucacasc")
                      (if (not (= (length vars) (length args)))
                          (raise-runtime-error "ArityError" line 
                                               (format "Function expects ~a arguments but got ~a" 
@@ -642,6 +677,8 @@
 
 (define extend-env*
   (lambda (vars vals env)
+    (displayln "hrhuiehgueir")
+    (displayln vals)
     (if (null? vars)
         env
         (extend-env (car vars) (car vals)
