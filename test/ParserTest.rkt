@@ -92,3 +92,11 @@ int main () {
     return 0;
 }
 ")
+(test-parse "
+int main() {
+    int len;
+    len = 3;
+    int values[len];
+    return 4;
+}    
+")

@@ -288,16 +288,25 @@ int main() {
 
 (define array "
 int increment_all(int arr[], int size) {
+    print(\"hello\");
     int i;
     i = 0;
+    print(\"goodbye\");
     while (i < size) {
+        print(\"~x\" i);
+        int d;
+        d = arr[i];
+        print(\"saaaa ~x\" d);
         arr[i] = arr[i] + 1;
+        print(\"~x\" i);
         i = i + 1;
     }
+    print(\"goodbye\");
     return 0;
 }
 
 int process_array(int arr[], int size) {
+    print(\"started\");
     increment_all(arr, size);
     increment_all(arr, size);
     return 0;
@@ -317,6 +326,8 @@ int main() {
 
 (define return_test "
 int main() {
+    int len;
+    len = 3;
     return 4;
     print(\"sds\");
     return 5;
@@ -331,6 +342,29 @@ int main () {
     y = \"salam\";
     print(\"~x\" x == y);
     return 0;
+}
+")
+
+(define lazy-eval-call "
+int loop (int n) {
+    return loop (n + 1);
+}
+
+int f(int n) {
+    return 11;
+}
+
+int main () {
+    print (\"~x\" f(loop(2)));
+    return 1;
+}
+")
+
+(define lazy-eval-assign "
+int main () {
+    int a;
+    a = 3/0;
+    return 2;
 }
 ")
 
@@ -357,6 +391,12 @@ int main () {
 (newline)
 
 (run (do-parse string-test))
+(newline)
+
+(run (do-parse lazy-eval-call))
+(newline)
+
+(run (do-parse lazy-eval-assign))
 (newline)
 
 ; (printf "Testing type error:\n")

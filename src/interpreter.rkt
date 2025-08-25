@@ -69,8 +69,9 @@
 
 ;; Thunks for lazy evaluation
 (define-datatype thunk thunk?
-  (a-thunk (exp expression?) (env environment?))
-  (evaluated-thunk (val expval?)))
+  (a-thunk (exp expression?) (env environment?)))
+  ; (evaluated-thunk (val expval?)))
+; (define-struct thunk (exp env) #:transparent)
 
 ;; Function declarations for mutual recursion
 (define-datatype func-decl func-decl?
@@ -188,12 +189,42 @@
 ;                  val))
 ;       (evaluated-thunk (val) val))))
 
-(define thunk->exp
+(define value-of-thunk
   (lambda (th)
     (cases thunk th
-      (a-thunk (exp env) exp)
-      (evaluated-thunk (val) (raise-runtime-error "EvaluationError" 0 "Thunk already evaluated")))))
+      (a-thunk (exp env)
+        ;; evaluate in the captured environment
+        (value-of exp env (get-line-from exp))))))
 
+; (define thunk->exp
+;   (lambda (th)
+;     (cases thunk th
+;       (a-thunk (exp env) exp)
+;       (evaluated-thunk (val) (raise-runtime-error "EvaluationError" 0 "Thunk already evaluated")))))
+
+(define (deref-and-install! env var line)
+  (let* ((ref (apply-env env var line))
+                     (w (deref ref)))
+                 (cond
+                   ((expval? w) w) ; already a value
+                   ((thunk? w) ; force, memoize, return
+                    (let ((val (value-of-thunk w)))
+                      (setref! ref val)
+                      val))
+                   (else
+                   (raise-runtime-error "EvaluationError" line
+                     (format "Location for ~a holds neither value nor thunk" var))))))
+
+;; Force an arbitrary value (used for array slots)
+(define (array-cell-deref v)
+  (cond
+    ((expval? v) v)
+    ((thunk? v)
+     (cases thunk v
+       (a-thunk (exp th-env)
+         (value-of exp th-env (get-line-from exp)))))
+    (else (raise-runtime-error "EvaluationError" 0
+                               "Unknown value (neither expval nor thunk)"))))
 ;; =============================================================================
 ;; EXPRESSED VALUE OPERATIONS
 ;; =============================================================================
@@ -457,26 +488,40 @@
       (const-float-exp (num) (num-val num))
       (const-string-exp (str) (string-val str))
       (const-bool-exp (bool) (bool-val bool))
-      (var-exp (var) (deref (apply-env env var line)))
+      ; (var-exp (var) (deref (apply-env env var line)))
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; using thunks instead
-      ; (var-exp (var) (let ((w (deref (apply-env env var)))))
-      ;                   (if (expval? w)
-      ;                       w
-      ;                       (let ((val1 (value-of-thunk w)))
-      ;                         (begin
-      ;                           (setref! ref1 val1)
-      ;                           val1))))))
+      ; (var-exp (var)
+      ;          (let* ((ref (apply-env env var line))
+      ;                (w (deref ref)))
+      ;            (cond
+      ;              ((expval? w) w) ; already a value
+      ;              ((thunk? w) ; force, memoize, return
+      ;               (let ((val (value-of-thunk w)))
+      ;                 (setref! ref val)
+      ;                 val))
+      ;              (else
+      ;              (raise-runtime-error "EvaluationError" line
+      ;                (format "Location for ~a holds neither value nor thunk" var))))))
+      (var-exp (var) (deref-and-install! env var line))
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       (array-ref-exp (var index)
-                     (let ((array-ref (apply-env env var line))
+                    ;  (let ((array-ref (apply-env env var line))
+                     (let ((arr-val (deref-and-install! env var line))
                            (idx-val (value-of index env line)))
-                       (let ((array (expval->array (deref array-ref) line))
+                      ;  (let ((array (expval->array (deref array-ref) line))
+                       (let ((array (expval->array arr-val line))
                              (idx (expval->num idx-val line)))
                          (if (or (< idx 0) (>= idx (vector-length array)))
                              (raise-runtime-error "IndexError" line 
                                                   (format "Array index ~a out of bounds for array of size ~a" 
                                                           idx (vector-length array)))
-                             (vector-ref array idx)))))
+                            ;  (vector-ref array idx)))))
+                            (let ((cell (vector-ref array idx)))
+                              (if (thunk? cell)
+                                  (let ((res (array-cell-deref cell)))
+                                    (vector-set! array idx res)  ; memoize in the slot
+                                    res)
+                                  cell))))))
       (assign-exp (var exp)
                   (let ((val (value-of exp env line)))
                     (cases variable var
@@ -504,9 +549,10 @@
                       (apply-unary-op op val line)))
       (call-exp (rator rands)
                 (let ((proc-val-exp (value-of rator env line))
-                      (args (map (lambda (rand) (value-of rand env line)) rands)))
+                      ; (args (map (lambda (rand) (value-of rand env line)) rands)))
+                      (thunk-args (map (lambda (rand) (a-thunk rand env)) rands)))
                   (let ((proc (expval->proc proc-val-exp line)))
-                    (apply-procedure proc args env line))))
+                    (apply-procedure proc thunk-args env line))))
       (print-exp (format-str args)
                  (let ((str (expval->string (value-of format-str env line) line))
                        (arg-vals (map (lambda (arg) (value-of arg env line)) args)))
