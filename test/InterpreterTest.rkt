@@ -212,6 +212,8 @@ int main () {
     z = f (5);
     float g;
     g = x / 1;
+    print(\"sssssdddd\");
+    print(\"~x\" y + z);
     return (x + 2*(y + z) + g);
 }
 ")
@@ -377,6 +379,29 @@ int main () {
 }
 ")
 
+(define function-call "
+int f(int a, int b) {
+    print(\"~x\" a + b);
+    return a + b;
+}
+int main () {
+    int n;
+    n = 4;
+    int m;
+    m = 3 + 65 + 7;
+    return f(n, m + 4);
+}
+")
+
+(define string-array "
+int main () {
+    string s;
+    s = \"awerui\";
+    print(\"~x\" s[4]);
+    return 0;
+}
+")
+
 ;; Run the tests
 (run (do-parse chechkk))
 (newline)
@@ -409,6 +434,12 @@ int main () {
 ; (newline)
 
 (run (do-parse short-circuit))
+(newline)
+
+(run (do-parse function-call))
+(newline)
+
+(run (do-parse string-array))
 (newline)
 
 ; (printf "Testing type error:\n")
