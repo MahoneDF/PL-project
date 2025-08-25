@@ -55,7 +55,9 @@
 ;; Procedures
 (define-datatype proc proc?
   (procedure 
+   (proc-name symbol?)
    (bvars (list-of symbol?))
+   (btypes (list-of symbol?))
   ;  (body expression?)
    (body statement?)
    (env environment?))
@@ -253,6 +255,15 @@
       (proc-val (proc) "proc-val")
       (else "undefined"))))
 
+(define get-type-name-from-type-spec
+  (lambda (type-spec)
+         (case type-spec
+           ((int) "num-val")
+           ((float) "num-val")
+           ((string) "string-val")
+           (else "undefined")
+           )))
+
 ;; =============================================================================
 ;; MAIN INTERPRETER FUNCTIONS
 ;; =============================================================================
@@ -304,16 +315,20 @@
                ; check if it is a recursive function
               ;  (display (statement? body))
                (if (is-fun-recursive body id) 
-                   (let ((param-names (extract-param-names params)))
+                   (let ((param-names (extract-param-stats params #t))
+                         (param-types (extract-param-stats params #f)))
                      (extend-env-recursively
                       (list id)
                       (list param-names)
+                      ; (list param-types)
                       (list body)
                       env))
-                   (let ((param-names (extract-param-names params)))
+                   (let ((param-names (extract-param-stats params #t))
+                         (param-types (extract-param-stats params #f)))
                      (extend-env id
-                                 (newref (proc-val (procedure param-names body env)))
-                                 env)))))))
+                                 (newref (proc-val (procedure id param-names param-types body env)))
+                                 env)
+                     ))))))
 
 ; TODO: add recursive function definition
 (define is-fun-recursive
@@ -378,18 +393,34 @@
       ;  #f
        )))
 
-(define extract-param-names
-  (lambda (params)
+(define extract-param-stats
+  (lambda (params should-extract-name)
     (cases params-list params
       (param-list (param-list)
-                  (map extract-single-param-name param-list))
-      (empty-params () '()))))
+                  (if should-extract-name
+                    (map extract-single-param-name param-list)
+                    (map extract-single-param-type param-list)
+                      )
+                  )
+      (empty-params () '())
+      )
+    ))
 
 (define extract-single-param-name
   (lambda (par)
-    (cases param par
-      (argvar (type-spec id) id)
-      (argarray (type-spec id) id))))
+      (cases param par
+        (argvar (type-spec id) id)
+        (argarray (type-spec id) id))    
+    )
+  )
+
+(define extract-single-param-type
+  (lambda (par)
+      (cases param par
+        (argvar (type-spec id) type-spec)
+        (argarray (type-spec id) type-spec))    
+    )
+  )
 
 (define find-and-call-main
   (lambda (env)
@@ -619,15 +650,20 @@
 (define apply-procedure
   (lambda (proc1 args env line)
     (cases proc proc1
-      (procedure (vars body saved-env)
+      (procedure (proc-name vars vars-types body saved-env)
                  (if (not (= (length vars) (length args)))
                      (raise-runtime-error "ArityError" line 
                                           (format "Function expects ~a arguments but got ~a" 
                                                   (length vars) (length args)))
-                     (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                       (with-handlers ([return-signal?
-                               (lambda (rs) (return-signal-value rs))])
-                         (value-of-statement body new-env)))))
+                     (if (check-procedure-args-types args vars-types 0)
+                      (let ((new-env (extend-env* vars (map newref args) saved-env)))
+                        (with-handlers ([return-signal?
+                                (lambda (rs) (return-signal-value rs))])
+                          (value-of-statement body new-env)))
+                      (raise-runtime-error "TypeError" 0
+                        (format "In calling function ~a, one of the arguments has wrong type." proc-name) )
+                      )
+                     ))
       (rec-procedure (name vars body saved-env)
                      (if (not (= (length vars) (length args)))
                          (raise-runtime-error "ArityError" line 
@@ -637,6 +673,18 @@
                            (with-handlers ([return-signal?
                                (lambda (rs) (return-signal-value rs))])
                              (value-of-statement body new-env))))))))    
+
+(define check-procedure-args-types
+  (lambda (args fun-types ctr)
+    (if (equal? ctr (length args)) #t
+        (if (equal? (get-type (list-ref args ctr))
+                    (get-type-name-from-type-spec (list-ref fun-types ctr)))
+            (check-procedure-args-types args fun-types (+ ctr 1))
+            #f
+            )
+        )
+    )
+  )
 
 (define extend-env*
   (lambda (vars vals env)
