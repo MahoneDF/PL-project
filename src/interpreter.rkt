@@ -35,6 +35,7 @@
   (extend-env-recursively
    (proc-names (list-of symbol?))
    (b-vars (list-of(list-of symbol?)))
+   (b-types (list-of (list-of symbol?)))
    (proc-bodies (list-of  statement?))
    (saved-env environment?)))
 
@@ -65,6 +66,7 @@
   (rec-procedure
    (proc-name symbol?)
    (bvars (list-of symbol?))
+   (btypes (list-of symbol?))
    (body statement?)
    (env environment?)
    ))
@@ -159,7 +161,7 @@
                   (if (eqv? search-sym var)
                       val
                       (apply-env saved-env search-sym line)))
-      (extend-env-recursively (p-names b-vars p-bodies saved-env)
+      (extend-env-recursively (p-names b-vars b-types p-bodies saved-env)
                               (let ((n (location search-sym p-names)))
                                 (if n
                                     (newref
@@ -167,6 +169,7 @@
                                       (rec-procedure
                                        (list-ref p-names n)
                                        (list-ref b-vars n)
+                                       (list-ref b-types n)
                                        (list-ref p-bodies n)
                                        env)))
                                     (apply-env saved-env search-sym line)))
@@ -320,7 +323,7 @@
                      (extend-env-recursively
                       (list id)
                       (list param-names)
-                      ; (list param-types)
+                      (list param-types)
                       (list body)
                       env))
                    (let ((param-names (extract-param-stats params #t))
@@ -664,15 +667,20 @@
                         (format "In calling function ~a, one of the arguments has wrong type." proc-name) )
                       )
                      ))
-      (rec-procedure (name vars body saved-env)
+      (rec-procedure (name vars vars-types body saved-env)
                      (if (not (= (length vars) (length args)))
                          (raise-runtime-error "ArityError" line 
                                               (format "Function expects ~a arguments but got ~a" 
                                                       (length vars) (length args)))
-                         (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                           (with-handlers ([return-signal?
-                               (lambda (rs) (return-signal-value rs))])
-                             (value-of-statement body new-env))))))))    
+                         (if (check-procedure-args-types args vars-types 0)
+                          (let ((new-env (extend-env* vars (map newref args) saved-env)))
+                            (with-handlers ([return-signal?
+                                (lambda (rs) (return-signal-value rs))])
+                              (value-of-statement body new-env)))
+                          (raise-runtime-error "TypeError" 0
+                            (format "In calling function ~a, one of the arguments has wrong type." name) )
+                             )
+                         )))))
 
 (define check-procedure-args-types
   (lambda (args fun-types ctr)
