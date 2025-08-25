@@ -210,7 +210,7 @@
 (define expval->int
   (lambda (v line)
     (cases expval v
-      (int-val (num) num)
+      (int-val (num) (inexact->exact num))
       (else (raise-runtime-error "TypeError" line "Expected an integer")))))
 
 (define expval->float
@@ -266,6 +266,12 @@
       (array-val (arr type-name) type-name)
       (proc-val (proc) "proc-val")
       (else "undefined"))))
+
+(define check-type-compatibility
+  (lambda (type1 type2)
+    (if (equal? type1 type2) #t
+        (if (and (equal? type1 "float-val") (equal? type2 "int-val")) #t #f))
+    ))
 
 (define get-type-name-from-type-spec
   (lambda (type-spec)
@@ -541,7 +547,7 @@
                         (let ((var-ref (apply-env env id line)))
                           (cases reference var-ref
                             (a-ref (pos type-name) 
-                              (if (equal? type-name (get-type val))
+                              (if (check-type-compatibility type-name (get-type val))
                                   (setref! (apply-env env id line) val)
                                   (raise-runtime-error "TypeError" 0 
                                     (format "Expected ~a, got ~a" type-name (get-type val)))
@@ -561,7 +567,8 @@
                                                     idx (vector-length array)))
                                           (cases expval array-ref-dereffed
                                             (array-val (pos type-name) 
-                                              (if (equal? type-name (get-type val))
+                                              ; (if (equal? type-name (get-type val))
+                                              (if (check-type-compatibility type-name (get-type val))
                                               (begin
                                                 (vector-set! array idx val) 
                                                 val)
