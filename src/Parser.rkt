@@ -30,7 +30,8 @@
         (type-spec 
             [(INT) 'int]
             [(FLOAT) 'float]
-            [(STRING) 'string])
+            [(STRING) 'string]
+            [(BOOL) 'bool])
         (fun-declaration
             [(type-spec ID LEFTPAR params RIGHTPAR compound-stmnt) (list 'fun-dcl $1 $2 $4 $6)])
         (params
