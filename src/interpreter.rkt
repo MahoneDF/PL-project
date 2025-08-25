@@ -246,6 +246,7 @@
       ((int) (num-val 0))
       ((float) (num-val 0.0))
       ((string) (string-val ""))
+      ((bool) (bool-val #t))
       (else (raise-runtime-error "TypeError" 0 (format "Unknown type ~s" type-spec))))))
 
 (define get-type
@@ -264,6 +265,7 @@
            ((int) "num-val")
            ((float) "num-val")
            ((string) "string-val")
+           ((bool) "bool-val")
            (else "undefined")
            )))
 
