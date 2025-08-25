@@ -23,8 +23,6 @@
 
 (define test1 "
 int fac (int n) {
-print(\"sdsdsds\");
-print(\"sdsdsds ~x\" n);
 if (n <= 1) {
 return 1;
 } else {
@@ -42,7 +40,6 @@ int main() {
     } else {
         return 1;
     }
-    print(\"fuccccccck\");
     return fac(4);
 }
 ")
@@ -185,15 +182,11 @@ int main() {
 
 (define chechkk "
 int f (int n) {
-    print(\"asdasaaa\");
     int y;
     y = 1;
     while (n > 1) {
-        print(\"asdasaaa ~x\" n);
         y = y * n;
-        print(\"asdasaaaaaaa ~x\" n);
         n = n - 1;
-        print(\"asdasaaaaaaaaaaaaaaaa\");
     }
     return y;
 }
@@ -213,11 +206,9 @@ int main () {
         print(\"dsfsdsfdf\");
     }
     int z;
-    print(\"asda\");
     z = f (5);
     float g;
-    g = x / 1;
-    print(\"sssssdddd\");
+    g = x / 3;
     print(\"~x\" y + z);
     return (x + 2*(y + z) + g);
 }
@@ -429,6 +420,14 @@ int main(){
 }
 ")
 
+(define int-float-test "
+int main() {
+    int n;
+    n = 4.43;
+    return n;
+}
+")
+
 ;; Run the tests
 (run (do-parse chechkk))
 (newline)
@@ -473,6 +472,9 @@ int main(){
 (newline)
 
 (run (do-parse string-edit))
+(newline)
+
+(run (do-parse int-float-test))
 (newline)
 
 (printf "Testing type error:\n")
@@ -602,9 +604,9 @@ int main(){
 }
 ")
 
-; (printf ">>>>>>>>>>> P1:\n")
-; (run (do-parse p1))
-; (newline)
+(printf ">>>>>>>>>>> P1:\n")
+(run (do-parse p1))
+(newline)
 
 (define p2 "
 int quotient(int a, int b){

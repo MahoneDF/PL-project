@@ -521,7 +521,7 @@
       (return-stmt (exp)
                   (raise (make-return-signal (value-of exp env (get-line-from exp)))))
       (empty-return ()
-                    (raise (make-return-signal (num-val 0))))
+                    (raise (make-return-signal (int-val 0))))
       (expression-stmt (exp)
                        (value-of exp env (get-line-from exp)))
       (empty-exp ()
@@ -637,9 +637,14 @@
                      ;; Short Circuit Implementation
                      (let ((val1 (value-of exp1 env line)))
                        (cases expval val1
-                         (num-val (n1)
+                         (int-val (n1)
                            (if (and (equal? op '*) (equal? n1 0))
-                               (num-val 0)
+                               (int-val 0)
+                               (let ((val2 (value-of exp2 env line)))
+                                 (apply-binary-op op val1 val2 line))))
+                         (float-val (n1)
+                           (if (and (equal? op '*) (equal? n1 0))
+                               (int-val 0)
                                (let ((val2 (value-of exp2 env line)))
                                  (apply-binary-op op val1 val2 line))))
                          (bool-val (b1)
@@ -861,17 +866,17 @@
                                 (lambda (rs) (return-signal-value rs))])
                           (value-of-statement body new-env)))))))
 
-(define check-procedure-args-types
-  (lambda (args fun-types ctr)
-    (if (equal? ctr (length args)) #t
-        (if (equal? (get-type (list-ref args ctr))
-                    (get-type-name-from-type-spec (list-ref fun-types ctr)))
-            (check-procedure-args-types args fun-types (+ ctr 1))
-            #f
-            )
-        )
-    )
-  )
+; (define check-procedure-args-types
+;   (lambda (args fun-types ctr)
+;     (if (equal? ctr (length args)) #t
+;         (if (equal? (get-type (list-ref args ctr))
+;                     (get-type-name-from-type-spec (list-ref fun-types ctr)))
+;             (check-procedure-args-types args fun-types (+ ctr 1))
+;             #f
+;             )
+;         )
+;     )
+;   )
 
 (define extend-env*
   (lambda (vars vals env)
