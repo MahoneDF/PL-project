@@ -46,7 +46,8 @@
 
 ;; Expressed values
 (define-datatype expval expval?
-  (num-val (value number?))
+  (int-val (value integer?))
+  (float-val (value number?))
   (bool-val (value boolean?))
   (string-val (value string?))
   (array-val (value vector?) (type-name string?))
@@ -206,11 +207,17 @@
 ;; EXPRESSED VALUE OPERATIONS
 ;; =============================================================================
 
-(define expval->num
+(define expval->int
   (lambda (v line)
     (cases expval v
-      (num-val (num) num)
-      (else (raise-runtime-error "TypeError" line "Expected a number")))))
+      (int-val (num) num)
+      (else (raise-runtime-error "TypeError" line "Expected an integer")))))
+
+(define expval->float
+  (lambda (v line)
+    (cases expval v
+      (float-val (num) num)
+      (else (raise-runtime-error "TypeError" line "Expected a float")))))
 
 (define expval->bool
   (lambda (v line)
@@ -243,8 +250,8 @@
 (define get-default-value
   (lambda (type-spec)
     (case type-spec
-      ((int) (num-val 0))
-      ((float) (num-val 0.0))
+      ((int) (int-val 0))
+      ((float) (float-val 0.0))
       ((string) (string-val ""))
       ((bool) (bool-val #t))
       (else (raise-runtime-error "TypeError" 0 (format "Unknown type ~s" type-spec))))))
@@ -252,7 +259,8 @@
 (define get-type
   (lambda (exp)
     (cases expval exp
-      (num-val (num) "num-val")
+      (int-val (num) "int-val")
+      (float-val (num) "float-val")
       (bool-val (bool) "bool-val")
       (string-val (str) "string-val")
       (array-val (arr type-name) type-name)
@@ -262,8 +270,8 @@
 (define get-type-name-from-type-spec
   (lambda (type-spec)
          (case type-spec
-           ((int) "num-val")
-           ((float) "num-val")
+           ((int) "int-val")
+           ((float) "float-val")
            ((string) "string-val")
            ((bool) "bool-val")
            (else "undefined")
@@ -284,7 +292,7 @@
 (define value-of-declaration-list
   (lambda (decl-list env)
     (if (null? decl-list)
-        (num-val 0)  ; Empty program returns 0
+        (int-val 0)  ; Empty program returns 0
         (let ((new-env (process-declarations decl-list env)))
           (find-and-call-main new-env)))))
 
@@ -308,7 +316,7 @@
                 (let ((default-val (get-default-value type-spec)))
                   (extend-env id (newref default-val) env)))
       (array-spec (type-spec id size)
-                  (let* ((size-val (expval->num (value-of size env (get-line-from size)) (get-line-from size)))
+                  (let* ((size-val (expval->int (value-of size env (get-line-from size)) (get-line-from size)))
                          (default-val (get-default-value type-spec))
                          (array (make-vector size-val default-val)))
                     (extend-env id (newref (array-val array (get-type (get-default-value type-spec)))) env))))))
@@ -459,7 +467,7 @@
                                         (if (pair? result)
                                              (loop (cdr result))  ; Use updated environment
                                             (loop curr-env)))
-                                      (num-val 0)))))
+                                      (int-val 0)))))
                     ; (loop)))
                     (loop env)))
       (return-stmt (exp)
@@ -467,20 +475,20 @@
                   (raise (make-return-signal (value-of exp env (get-line-from exp)))))
       (empty-return ()
                     ; (num-val 0))
-                    (raise (make-return-signal (num-val 0))))
+                    (raise (make-return-signal (int-val 0))))
       (expression-stmt (exp)
                        (value-of exp env (get-line-from exp)))
       (empty-exp ()
-                 (num-val 0))
+                 (int-val 0))
       (var-dec-stmt (var-decl)
                     (let ((new-env (value-of-var-declaration var-decl env)))
                        ;; Return both value and updated environment
-                       (cons (num-val 0) new-env))))))
+                       (cons (int-val 0) new-env))))))
 
 (define value-of-statement-list
   (lambda (stmt-list env)
     (if (null? stmt-list)
-        (num-val 0)
+        (int-val 0)
         (if (null? (cdr stmt-list))
             ;; Last statement
             (let ((result (value-of-statement (car stmt-list) env)))
@@ -502,8 +510,8 @@
 (define value-of
   (lambda (exp env line)
     (cases expression exp
-      (const-exp (num) (num-val num))
-      (const-float-exp (num) (num-val num))
+      (const-exp (num) (int-val num))
+      (const-float-exp (num) (float-val num))
       (const-string-exp (str) (string-val str))
       (const-bool-exp (bool) (bool-val bool))
       (var-exp (var) (deref (apply-env env var line)))
@@ -520,7 +528,7 @@
                      (let ((array-ref (apply-env env var line))
                            (idx-val (value-of index env line)))
                        (let ((array (expval->array (deref array-ref) line))
-                             (idx (expval->num idx-val line)))
+                             (idx (expval->int idx-val line)))
                          (if (or (< idx 0) (>= idx (vector-length array)))
                              (raise-runtime-error "IndexError" line 
                                                   (format "Array index ~a out of bounds for array of size ~a" 
@@ -546,7 +554,7 @@
                                        (idx-val (value-of index env line)))
                                    (let ((array-ref-dereffed (deref array-ref)))
                                     (let ((array (expval->array array-ref-dereffed line))
-                                          (idx (expval->num idx-val line)))
+                                          (idx (expval->int idx-val line)))
                                       (if (or (< idx 0) (>= idx (vector-length array)))
                                           (raise-runtime-error "IndexError" line 
                                             (format "Array index ~a out of bounds for array of size ~a" 
@@ -588,16 +596,17 @@
 
 (define (apply-binary-op op v1 v2 line)
   (cases expval v1
-    (num-val (n1)
+    (int-val (n1)
       (cases expval v2
-        (num-val (n2)
+        
+        (float-val (n2)
           (case op
-            [(+) (num-val (+ n1 n2))]
-            [(-) (num-val (- n1 n2))]
-            [(*) (num-val (* n1 n2))]
+            [(+) (float-val (+ n1 n2))]
+            [(-) (float-val (- n1 n2))]
+            [(*) (float-val (* n1 n2))]
             [(/) (if (= n2 0)
                      (raise-runtime-error "DivideByZero" line "Division by zero")
-                     (num-val (/ n1 n2)))]
+                     (float-val (/ n1 n2)))]
             [(<)  (bool-val (< n1 n2))]
             [(<=) (bool-val (<= n1 n2))]
             [(>)  (bool-val (> n1 n2))]
@@ -606,6 +615,64 @@
             [(!=) (bool-val (not (= n1 n2)))]
             [else (raise-runtime-error "TypeError" line
                       (format "Unsupported op ~a on numbers" op))]))
+        (int-val (n2)
+          (case op
+            [(+) (int-val (+ n1 n2))]
+            [(-) (int-val (- n1 n2))]
+            [(*) (int-val (* n1 n2))]
+            [(/) (if (= n2 0)
+                      (raise-runtime-error "DivideByZero" line "Division by zero")
+                      (float-val (/ n1 n2)))]
+            [(<)  (bool-val (< n1 n2))]
+            [(<=) (bool-val (<= n1 n2))]
+            [(>)  (bool-val (> n1 n2))]
+            [(>=) (bool-val (>= n1 n2))]
+            [(==) (bool-val (= n1 n2))]
+            [(!=) (bool-val (not (= n1 n2)))]
+            [else (raise-runtime-error "TypeError" line
+                                        (format "Unsupported op ~a on numbers" op))])
+
+                 )
+        [else (raise-runtime-error "TypeError" line
+                 (format "Mismatched types: number ~a and ~a" n1 v2))]))
+    
+    (float-val (n1)
+      (cases expval v2
+        
+        (float-val (n2)
+          (case op
+            [(+) (float-val (+ n1 n2))]
+            [(-) (float-val (- n1 n2))]
+            [(*) (float-val (* n1 n2))]
+            [(/) (if (= n2 0)
+                     (raise-runtime-error "DivideByZero" line "Division by zero")
+                     (float-val (/ n1 n2)))]
+            [(<)  (bool-val (< n1 n2))]
+            [(<=) (bool-val (<= n1 n2))]
+            [(>)  (bool-val (> n1 n2))]
+            [(>=) (bool-val (>= n1 n2))]
+            [(==) (bool-val (= n1 n2))]
+            [(!=) (bool-val (not (= n1 n2)))]
+            [else (raise-runtime-error "TypeError" line
+                      (format "Unsupported op ~a on numbers" op))]))
+        (int-val (n2)
+          (case op
+            [(+) (float-val (+ n1 n2))]
+            [(-) (float-val (- n1 n2))]
+            [(*) (float-val (* n1 n2))]
+            [(/) (if (= n2 0)
+                      (raise-runtime-error "DivideByZero" line "Division by zero")
+                      (float-val (/ n1 n2)))]
+            [(<)  (bool-val (< n1 n2))]
+            [(<=) (bool-val (<= n1 n2))]
+            [(>)  (bool-val (> n1 n2))]
+            [(>=) (bool-val (>= n1 n2))]
+            [(==) (bool-val (= n1 n2))]
+            [(!=) (bool-val (not (= n1 n2)))]
+            [else (raise-runtime-error "TypeError" line
+                                        (format "Unsupported op ~a on numbers" op))])
+                 
+                 )
         [else (raise-runtime-error "TypeError" line
                  (format "Mismatched types: number ~a and ~a" n1 v2))]))
 
@@ -644,7 +711,11 @@
 (define apply-unary-op
   (lambda (op val line)
     (case op
-      ((-) (num-val (- (expval->num val line))))
+      ((-) (cases expval val
+             (int-val (num) (- (expval->int val line)))
+             (float-val (num) (- (expval->float val line)))
+             (else (raise-runtime-error "TypeError" line (format "Using minus for non-number types.")))
+             ))
       ((not) (bool-val (not (expval->bool val line))))
       (else (raise-runtime-error "OperatorError" line (format "Unknown unary operator: ~s" op))))))
 
@@ -724,7 +795,8 @@
 (define format-arg
   (lambda (val line)
     (cases expval val
-      (num-val (n) (number->string n))
+      (int-val (n) (number->string n))
+      (float-val (n) (number->string n))
       (bool-val (b) (if b "true" "false"))
       (string-val (s) s)
       (else (raise-runtime-error "TypeError" line "Cannot format value for printing")))))
@@ -780,7 +852,7 @@
   (var-dec-stmt (var-decl var-declaration?)))
 
 (define-datatype expression expression?
-  (const-exp (num number?))
+  (const-exp (num integer?))
   (const-float-exp (num number?))
   (const-string-exp (str string?))
   (const-bool-exp (bool boolean?))
@@ -910,7 +982,8 @@
 ;; Convert expressions
 (define (convert-expression exp)
   (match exp
-    [(? number? n) (const-exp n)]
+    [(? integer? n) (const-exp n)]
+    [(? number? n) (const-float-exp n)]
     [(? string? s) (const-string-exp s)]
     [(list 'True) (const-bool-exp #t)]
     [(list 'False) (const-bool-exp #f)]
