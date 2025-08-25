@@ -68,9 +68,7 @@ return isGlobFine();
 ; (list-ref (list-ref (list-ref (list-ref (list-ref (list-ref (do-parse test2) 1) 1) 4) 1) 1) 2)
 ; temp
 ; (do-parse test1)
-(displayln "fuuuuuuuuck")
 (run (do-parse test1))
-(displayln "fuuuuuuuuck")
 ; (define temp (do-parse test1))
 ; temp
 
@@ -187,14 +185,18 @@ int main() {
 
 (define chechkk "
 int f (int n) {
-        int y;
-        y = 1;
-        while (n > 1) {
-            y = y * n;
-            n = n - 1;
-        }
-        return y;
+    print(\"asdasaaa\");
+    int y;
+    y = 1;
+    while (n > 1) {
+        print(\"asdasaaa ~x\" n);
+        y = y * n;
+        print(\"asdasaaaaaaa ~x\" n);
+        n = n - 1;
+        print(\"asdasaaaaaaaaaaaaaaaa\");
     }
+    return y;
+}
 int main () {
     int x;
     x = 7;
@@ -211,6 +213,7 @@ int main () {
         print(\"dsfsdsfdf\");
     }
     int z;
+    print(\"asda\");
     z = f (5);
     float g;
     g = x / 1;
@@ -404,6 +407,28 @@ int main () {
 }
 ")
 
+(define function-type-test "
+int f(string d, int n){
+    return n;
+}
+int main(){
+    string r;
+    r = \"assa\";
+    print(\"~x\" f(r, r));
+    return;
+}
+")
+
+(define string-edit "
+int main(){
+    string str;
+    str =\"asxcb\";
+    str[1] = \"nsdfsda\";
+    print(\"~x\" str);
+    return;
+}
+")
+
 ;; Run the tests
 (run (do-parse chechkk))
 (newline)
@@ -442,6 +467,12 @@ int main () {
 (newline)
 
 (run (do-parse string-array))
+(newline)
+
+(run (do-parse function-type-test))
+(newline)
+
+(run (do-parse string-edit))
 (newline)
 
 (printf "Testing type error:\n")
