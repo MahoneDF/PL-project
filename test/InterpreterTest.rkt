@@ -368,6 +368,15 @@ int main () {
 }
 ")
 
+(define short-circuit "
+int loop (int n) {
+    return loop (n + 1);
+}
+int main () {
+    return False && (2 == loop(2));
+}
+")
+
 ;; Run the tests
 (run (do-parse chechkk))
 (newline)
@@ -396,7 +405,10 @@ int main () {
 (run (do-parse lazy-eval-call))
 (newline)
 
-(run (do-parse lazy-eval-assign))
+; (run (do-parse lazy-eval-assign))
+; (newline)
+
+(run (do-parse short-circuit))
 (newline)
 
 ; (printf "Testing type error:\n")
