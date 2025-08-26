@@ -304,7 +304,9 @@ int process_array(int arr[], int size) {
 }
 
 int main() {
-    int values[3];
+    int len;
+    len = 3;
+    int values[len];
     values[0] = 10;
     values[1] = 20;
     values[2] = 30;
@@ -481,14 +483,15 @@ int main(){
             length = length - 1;
             i = i + 1;
         }
-        return tmp;
+        print(\"~x\" tmp);
     }
+    return 0;
 }
 ")
 
-; (printf ">>>>>>>>>>> P1:\n")
-; (run (do-parse p1))
-; (newline)
+(printf ">>>>>>>>>>> P1:\n")
+(run (do-parse p1))
+(newline)
 
 (define p2 "
 int quotient(int a, int b){
@@ -535,7 +538,7 @@ int convert_to_tenth_base(int n){
 int main(){
     int len_a;
     len_a = 6;
-    int a[len_a];
+    int a[6];
     a[0] = 7;
     a[1] = 11;
     a[2] = 20;
@@ -545,7 +548,7 @@ int main(){
 
     int len_b;
     len_b = 6;
-    int b[len_b];
+    int b[6];
     b[0] = 111;
     b[1] = 1011;
     b[2] = 1100;
@@ -553,7 +556,6 @@ int main(){
     b[4] = 0;
     b[5] = 10001001;
 
-    convert_to_tenth_base(b[5]);
     int i;
     i = 0;
     int odd;
@@ -586,25 +588,28 @@ int main(){
     }
 
     if (even_check == 1 && odd_check == 1) {
-        return odd + even;
+        print(\"~x\" odd + even);
     }else{
     }
     if (even_check == 1 && odd_check == 0) {
-        return even;
+        print(\"~x\" even);
     }else{
     }
     if (even_check == 0 && odd_check == 1) {
-        return odd;
+        print(\"~x\" odd);
     }else{
     }
+    if (even_check == 0 && odd_check == 0){
+        print(\"0\");
+    }else{}
 
     return 0;
 }
 ")
 
-; (printf ">>>>>>>>>>> P2:\n")
-; (run (do-parse p2))
-; (newline)
+(printf ">>>>>>>>>>> P2:\n")
+(run (do-parse p2))
+(newline)
 
 (define p3 "
 int main(){
@@ -707,25 +712,25 @@ int main(){
     }
 
     if (x_win == 1 && y_win == 1){
-        print(\"Somebody Cheated!\n\");
+        print(\"Somebody Cheated!\");
     }else{
     }
     if (x_win == 1 && y_win == 0){
-        print(\"X wins!\n\");
+        print(\"X wins!\");
     }else{
     }
     if (x_win == 0 && y_win == 1){
-        print(\"Y wins!\n\");
+        print(\"Y wins!\");
     }else{
     }
     if (x_win == 0 && y_win == 0){
-        print(\"Draw!\n\");
+        print(\"Draw!\");
     }else{
     }
     return 0;
 }
 ")
 
-; (printf ">>>>>>>>>>> P3:\n")
-; (run (do-parse p3))
-; (newline)
+(printf ">>>>>>>>>>> P3:\n")
+(run (do-parse p3))
+(newline)
