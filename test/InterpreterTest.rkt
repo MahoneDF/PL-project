@@ -443,7 +443,7 @@ int length_number(int num){
     int t;
     t = 0;
     while (num >= 1){
-        num = num / 10;
+        num = quotient(num, 10);
         t = t + 1;
     }
     return t;
