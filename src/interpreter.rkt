@@ -503,12 +503,6 @@
                    (value-of-statement conseq env)
                    (value-of-statement alt env)))
       (while-stmt (test body)
-                  ; (letrec ((loop (lambda ()
-                                  ;  (if (expval->bool (value-of test env))
-                                  ;      (begin
-                                  ;        (value-of-statement body env)
-                                  ;        (loop))
-                                  ;      (num-val 0)))))
                   (letrec ((loop (lambda (curr-env)
                                   (if (expval->bool (value-of test curr-env (get-line-from test)) (get-line-from test))
                                       (let ((result (value-of-statement body curr-env)))
@@ -516,7 +510,6 @@
                                              (loop (cdr result))  ; Use updated environment
                                             (loop curr-env)))
                                       (int-val 0)))))
-                    ; (loop)))
                     (loop env)))
       (return-stmt (exp)
                   (raise (make-return-signal (value-of exp env (get-line-from exp)))))
@@ -561,21 +554,17 @@
       (const-string-exp (str) 
                         (let ((len (string-length str)))
                           (string-val (substring str 1 (- len 1)))))
-      ;  (string-val str))
       (const-bool-exp (bool) (bool-val bool))
       (var-exp (var) (deref-and-install! env var line))
       (array-ref-exp (var index)
-                    ;  (let ((array-ref (apply-env env var line))
                      (let ((arr-val (deref-and-install! env var line))
                            (idx-val (value-of index env line)))
-                      ;  (let ((array (expval->array (deref array-ref) line))
                        (let ((array (expval->array arr-val line))
                              (idx (expval->int idx-val line)))
                          (if (or (< idx 0) (>= idx (vector-length array)))
                              (raise-runtime-error "IndexError" line 
                                                   (format "Array index ~a out of bounds for array of size ~a" 
                                                           idx (vector-length array)))
-                            ;  (vector-ref array idx)))))
                             (let ((cell (vector-ref array idx)))
                               (if (thunk? cell)
                                   (let ((res (array-cell-deref cell)))
@@ -584,7 +573,6 @@
                                   cell))))))
       (assign-exp (var exp)
                   (let ((val (value-of exp env line)))
-                  ; (let ((val-thunk (a-thunk exp env)))
                     (cases variable var
                       (simple-var (id)
                         (let ((var-ref (apply-env env id line)))
@@ -594,12 +582,8 @@
                                   (setref! (apply-env env id line) val)
                                   (raise-runtime-error "TypeError" 0 
                                     (format "Expected ~a, got ~a" type-name (get-type val)))
-                                  )))
-                          ; (setref! (apply-env env id line) val)
-                        )
+                                  ))))
                                   val)
-                                  ; (setref! (apply-env env id line) val-thunk)
-                                  ; val-thunk)
                       (array-var (id index)
                                  (let ((array-ref (apply-env env id line))
                                        (idx-val (value-of index env line)))
@@ -620,7 +604,6 @@
                                               (raise-runtime-error "TypeError" 0 
                                                 (format "Expected ~a, got ~a" type-name (get-type val)))
                                                   ))
-                                            ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                             (string-val (str)
                                               (if (equal? "string-val" (get-type val))
                                                   (begin
@@ -631,8 +614,7 @@
                                                     (format "Expected string-val, got ~a" (get-type val)))))
                                             (else (raise-runtime-error "ReferenceError" 0 "Couldn't deref array."))
                                             )
-                                          )))))))
-                                     )
+                                          ))))))))
       (binary-op-exp (op exp1 exp2)
                      ;; Short Circuit Implementation
                      (let ((val1 (value-of exp1 env line)))
@@ -677,8 +659,6 @@
                                       (length vars) (length rands)))
                             (let ((thunk-args (map (lambda (rand type) (a-thunk rand env type name)) rands vars-types)))
                               (apply-procedure proc1 thunk-args env line))))))))
-                    ; (let ((thunk-args (map (lambda (rand) (a-thunk rand env)) rands)))
-                    ;   (apply-procedure proc thunk-args env line)))))
       (print-exp (format-str args)
                  (let ((str (expval->string (value-of format-str env line) line))
                        (arg-vals (map (lambda (arg) (value-of arg env line)) args)))
@@ -817,40 +797,6 @@
 ;; =============================================================================
 ;; PROCEDURE APPLICATION
 ;; =============================================================================
-
-; (define apply-procedure
-;   (lambda (proc1 args env line)
-;     (displayln "iuiuiuiuiu")
-;     (displayln args)
-;     (cases proc proc1
-;       (procedure (proc-name vars vars-types body saved-env)
-;                  (if (not (= (length vars) (length args)))
-;                      (raise-runtime-error "ArityError" line 
-;                                           (format "Function expects ~a arguments but got ~a" 
-;                                                   (length vars) (length args)))
-;                      (if (check-procedure-args-types args vars-types 0)
-;                       (let ((new-env (extend-env* vars (map newref args) saved-env)))
-;                         (with-handlers ([return-signal?
-;                                 (lambda (rs) (return-signal-value rs))])
-;                           (value-of-statement body new-env)))
-;                       (raise-runtime-error "TypeError" 0
-;                         (format "In calling function ~a, one of the arguments has wrong type." proc-name) )
-;                       )
-;                      ))
-;       (rec-procedure (name vars vars-types body saved-env)
-;                      (if (not (= (length vars) (length args)))
-;                          (raise-runtime-error "ArityError" line 
-;                                               (format "Function expects ~a arguments but got ~a" 
-;                                                       (length vars) (length args)))
-;                          (if (check-procedure-args-types args vars-types 0)
-;                           (let ((new-env (extend-env* vars (map newref args) saved-env)))
-;                             (with-handlers ([return-signal?
-;                                 (lambda (rs) (return-signal-value rs))])
-;                               (value-of-statement body new-env)))
-;                           (raise-runtime-error "TypeError" 0
-;                             (format "In calling function ~a, one of the arguments has wrong type." name) )
-;                              )
-;                          )))))
 
 (define apply-procedure
   (lambda (proc1 args env line)
@@ -998,33 +944,11 @@
 (define (convert-parser-output parser-output)
   (convert-program parser-output))
 
-;; Helper
-; (define (collect-decls dl)
-;   ; (display (list-ref dl 3))
-;   ; (display dl)
-;   ; (display "\n")
-;   (if (null? dl)
-;       '()
-      ; (if (null? (cddr dl))
-      ;     (cons (list (car dl) (cadr dl))
-      ;           '())
-      ;     (cons (list (car dl) (cadr dl))
-      ;           (collect-decls (car (cddr dl)))))))
-                ; (collect-decls (cddr dl))))))
-
 ;; Convert a program
 (define (convert-program pgm)
   (match pgm
     [(list 'program decl-list)
-    ;  (a-program (map convert-declaration (collect-decls decl-list)))]))
      (a-program (map convert-declaration decl-list))]))
-    ;  (a-program (convert-declaration-list decl-list))]))
-
-; (define (convert-declaration-list decl-list)
-;   (match decl-list
-;     [(list decl)
-;      ()]
-;    [(list decl decl-list)]))
 
 ;; Convert a declaration (var or fun)
 (define (convert-declaration decl)
