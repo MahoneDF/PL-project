@@ -25,12 +25,13 @@
             [(var-declaration) (list 'vardec $1)]
             [(fun-declaration) (list 'fundec $1)])
         (var-declaration
-            [(type-spec ID LEFTBR NUM RIGHTBR SEMICOLON) (list 'array-spec $1 $2 $4)]
+            [(type-spec ID LEFTBR expression RIGHTBR SEMICOLON) (list 'array-spec $1 $2 $4)]
             [(type-spec ID SEMICOLON) (list 'var-spec $1 $2)])
         (type-spec 
             [(INT) 'int]
             [(FLOAT) 'float]
-            [(STRING) 'string])
+            [(STRING) 'string]
+            [(BOOL) 'bool])
         (fun-declaration
             [(type-spec ID LEFTPAR params RIGHTPAR compound-stmnt) (list 'fun-dcl $1 $2 $4 $6)])
         (params

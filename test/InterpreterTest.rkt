@@ -165,13 +165,10 @@ int main() {
 (define array-type-error "
 int main() {
     int arr[3];
-    string x[3];
-    x[0] = \"salam\";
-    if (x[0] == \"sa\"){
-        print(\"sasdasda\n\");
-    }else{
-    }
-    return 0;
+string x;
+x = \"salam\";
+arr[0] = x;
+return x;
 }
 ")
 
@@ -337,73 +334,73 @@ int main () {
 ")
 
 ;; Run the tests
-(run (do-parse chechkk))
+; (run (do-parse chechkk))
+; (newline)
+
+; (run (do-parse scopeTesting))
+; (newline)
+
+; (run (do-parse SimpleScopeTesting))
+; (newline)
+
+; (run (do-parse AnotherSimpleScopeTesting))
+; (newline)
+
+; (run (do-parse FinalScopingCheck))
+; (newline)
+
+; (run (do-parse array))
+; (newline)
+
+; (run (do-parse return_test))
+; (newline)
+
+; (run (do-parse string-test))
 (newline)
 
-(run (do-parse scopeTesting))
+(printf "Testing type error:\n")
+(run (do-parse type-error-test))
 (newline)
 
-(run (do-parse SimpleScopeTesting))
+(printf "Testing undefined variable:\n")
+(run (do-parse undefined-var-test))
 (newline)
 
-(run (do-parse AnotherSimpleScopeTesting))
+(printf "Testing division by zero:\n")
+(run (do-parse division-by-zero-test))
 (newline)
 
-(run (do-parse FinalScopingCheck))
+(printf "Testing index out of range:\n")
+(run (do-parse index-out-of-range-test))
 (newline)
 
-(run (do-parse array))
+(printf "Testing arity mismatch:\n")
+(run (do-parse arity-mismatch-test))
 (newline)
 
-(run (do-parse return_test))
+(printf "Testing array index type error:\n")
+(run (do-parse array-index-type-error-test))
 (newline)
 
-(run (do-parse string-test))
+(printf "Testing print format error:\n")
+(run (do-parse print-format-error-test))
 (newline)
 
-; (printf "Testing type error:\n")
-; (run (do-parse type-error-test))
-; (newline)
+(printf "Testing function call type error:\n")
+(run (do-parse function-call-type-error-test))
+(newline)
 
-; (printf "Testing undefined variable:\n")
-; (run (do-parse undefined-var-test))
-; (newline)
+(printf "Testing nested errors:\n")
+(run (do-parse nested-error-test))
+(newline)
 
-; (printf "Testing division by zero:\n")
-; (run (do-parse division-by-zero-test))
-; (newline)
+(printf "Testing array type errors:\n")
+(run (do-parse array-type-error))
+(newline)
 
-; (printf "Testing index out of range:\n")
-; (run (do-parse index-out-of-range-test))
-; (newline)
-
-; (printf "Testing arity mismatch:\n")
-; (run (do-parse arity-mismatch-test))
-; (newline)
-
-; (printf "Testing array index type error:\n")
-; (run (do-parse array-index-type-error-test))
-; (newline)
-
-; (printf "Testing print format error:\n")
-; (run (do-parse print-format-error-test))
-; (newline)
-
-; (printf "Testing function call type error:\n")
-; (run (do-parse function-call-type-error-test))
-; (newline)
-
-; (printf "Testing nested errors:\n")
-; (run (do-parse nested-error-test))
-; (newline)
-
-; (printf "Testing array type errors:\n")
-; (run (do-parse array-type-error))
-; (newline)
-
-; (printf "Testing assignment type errors:\n")
-; (run (do-parse assignment-type-error))
-; (newline)
+(printf "Testing assignment type errors:\n")
+(run (do-parse assignment-type-error))
+(newline)
 
 
 (define scoping-test "

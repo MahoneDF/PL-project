@@ -35,27 +35,31 @@
   (extend-env-recursively
    (proc-names (list-of symbol?))
    (b-vars (list-of(list-of symbol?)))
+   (b-types (list-of (list-of symbol?)))
    (proc-bodies (list-of  statement?))
    (saved-env environment?)))
 
 ;; Reference for mutable storage
 (define-datatype reference reference?
 ;   (a-ref (position integer?) (vec vector?)))
-  (a-ref (position integer?)))
+  (a-ref (position integer?) (type-name string?)))
 
 ;; Expressed values
 (define-datatype expval expval?
-  (num-val (value number?))
+  (int-val (value integer?))
+  (float-val (value number?))
   (bool-val (value boolean?))
   (string-val (value string?))
-  (array-val (value vector?))
+  (array-val (value vector?) (type-name string?))
   (proc-val (procedure proc?))
   (thunk-val (thunk thunk?)))
 
 ;; Procedures
 (define-datatype proc proc?
   (procedure 
+   (proc-name symbol?)
    (bvars (list-of symbol?))
+   (btypes (list-of symbol?))
   ;  (body expression?)
    (body statement?)
    (env environment?))
@@ -63,6 +67,7 @@
   (rec-procedure
    (proc-name symbol?)
    (bvars (list-of symbol?))
+   (btypes (list-of symbol?))
    (body statement?)
    (env environment?)
    ))
@@ -100,12 +105,12 @@
   (lambda (val)
     (let ((next-ref (length the-store)))
       (set! the-store (append the-store (list val)))
-      (a-ref next-ref))))
+      (a-ref next-ref (get-type val))))) 
 
 (define deref
   (lambda (ref)
     (cases reference ref
-      (a-ref (pos) 
+      (a-ref (pos type-name) 
              (if (>= pos (length the-store))
                  (raise-runtime-error "ReferenceError" 0 "Invalid reference")
                  (list-ref the-store pos))))))
@@ -113,7 +118,7 @@
 (define setref!
   (lambda (ref val)
     (cases reference ref
-      (a-ref (pos)
+      (a-ref (pos type-name)
              (if (>= pos (length the-store))
                  (raise-runtime-error "ReferenceError" 0 "Invalid reference")
                  (set! the-store
@@ -123,6 +128,9 @@
                              (cond
                                ((null? store1) (raise-runtime-error "ReferenceError" 0 "Invalid reference"))
                                ((zero? ref1) (cons val (cdr store1)))
+                              ;  ((zero? ref1) (if (equal? type-name (get-type val)) 
+                              ;                    (cons val (cdr store1))
+                              ;                    (raise-runtime-error "MismatchError" 0 "Mismatch type for assignment.")))
                                (else (cons (car store1) (setref-inner (cdr store1) (- ref1 1))))))))
                          (setref-inner the-store pos))))))))
 
@@ -154,7 +162,7 @@
                   (if (eqv? search-sym var)
                       val
                       (apply-env saved-env search-sym line)))
-      (extend-env-recursively (p-names b-vars p-bodies saved-env)
+      (extend-env-recursively (p-names b-vars b-types p-bodies saved-env)
                               (let ((n (location search-sym p-names)))
                                 (if n
                                     (newref
@@ -162,6 +170,7 @@
                                       (rec-procedure
                                        (list-ref p-names n)
                                        (list-ref b-vars n)
+                                       (list-ref b-types n)
                                        (list-ref p-bodies n)
                                        env)))
                                     (apply-env saved-env search-sym line)))
@@ -198,11 +207,17 @@
 ;; EXPRESSED VALUE OPERATIONS
 ;; =============================================================================
 
-(define expval->num
+(define expval->int
   (lambda (v line)
     (cases expval v
-      (num-val (num) num)
-      (else (raise-runtime-error "TypeError" line "Expected a number")))))
+      (int-val (num) (inexact->exact num))
+      (else (raise-runtime-error "TypeError" line "Expected an integer")))))
+
+(define expval->float
+  (lambda (v line)
+    (cases expval v
+      (float-val (num) num)
+      (else (raise-runtime-error "TypeError" line "Expected a float")))))
 
 (define expval->bool
   (lambda (v line)
@@ -219,7 +234,7 @@
 (define expval->array
   (lambda (v line)
     (cases expval v
-      (array-val (arr) arr)
+      (array-val (arr type-name) arr)
       (else (raise-runtime-error "TypeError" line "Expected an array")))))
 
 (define expval->proc
@@ -235,10 +250,38 @@
 (define get-default-value
   (lambda (type-spec)
     (case type-spec
-      ((int) (num-val 0))
-      ((float) (num-val 0.0))
+      ((int) (int-val 0))
+      ((float) (float-val 0.0))
       ((string) (string-val ""))
+      ((bool) (bool-val #t))
       (else (raise-runtime-error "TypeError" 0 (format "Unknown type ~s" type-spec))))))
+
+(define get-type
+  (lambda (exp)
+    (cases expval exp
+      (int-val (num) "int-val")
+      (float-val (num) "float-val")
+      (bool-val (bool) "bool-val")
+      (string-val (str) "string-val")
+      (array-val (arr type-name) type-name)
+      (proc-val (proc) "proc-val")
+      (else "undefined"))))
+
+(define check-type-compatibility
+  (lambda (type1 type2)
+    (if (equal? type1 type2) #t
+        (if (and (equal? type1 "float-val") (equal? type2 "int-val")) #t #f))
+    ))
+
+(define get-type-name-from-type-spec
+  (lambda (type-spec)
+         (case type-spec
+           ((int) "int-val")
+           ((float) "float-val")
+           ((string) "string-val")
+           ((bool) "bool-val")
+           (else "undefined")
+           )))
 
 ;; =============================================================================
 ;; MAIN INTERPRETER FUNCTIONS
@@ -255,7 +298,7 @@
 (define value-of-declaration-list
   (lambda (decl-list env)
     (if (null? decl-list)
-        (num-val 0)  ; Empty program returns 0
+        (int-val 0)  ; Empty program returns 0
         (let ((new-env (process-declarations decl-list env)))
           (find-and-call-main new-env)))))
 
@@ -272,17 +315,17 @@
       (vardec-decl (var-decl) (value-of-var-declaration var-decl env))
       (fundec-decl (fun-decl) (value-of-fun-declaration fun-decl env)))))
 
-(define value-of-var-declaration
+(define value-of-var-declaration 
   (lambda (var-decl env)
     (cases var-declaration var-decl
       (var-spec (type-spec id)
                 (let ((default-val (get-default-value type-spec)))
                   (extend-env id (newref default-val) env)))
       (array-spec (type-spec id size)
-                  (let* ((size-val (expval->num (value-of size env (get-line-from size)) (get-line-from size)))
+                  (let* ((size-val (expval->int (value-of size env (get-line-from size)) (get-line-from size)))
                          (default-val (get-default-value type-spec))
                          (array (make-vector size-val default-val)))
-                    (extend-env id (newref (array-val array)) env))))))
+                    (extend-env id (newref (array-val array (get-type (get-default-value type-spec)))) env))))))
 
 (define value-of-fun-declaration
   (lambda (fun-decl env)
@@ -291,16 +334,20 @@
                ; check if it is a recursive function
               ;  (display (statement? body))
                (if (is-fun-recursive body id) 
-                   (let ((param-names (extract-param-names params)))
+                   (let ((param-names (extract-param-stats params #t))
+                         (param-types (extract-param-stats params #f)))
                      (extend-env-recursively
                       (list id)
                       (list param-names)
+                      (list param-types)
                       (list body)
                       env))
-                   (let ((param-names (extract-param-names params)))
+                   (let ((param-names (extract-param-stats params #t))
+                         (param-types (extract-param-stats params #f)))
                      (extend-env id
-                                 (newref (proc-val (procedure param-names body env)))
-                                 env)))))))
+                                 (newref (proc-val (procedure id param-names param-types body env)))
+                                 env)
+                     ))))))
 
 ; TODO: add recursive function definition
 (define is-fun-recursive
@@ -365,18 +412,34 @@
       ;  #f
        )))
 
-(define extract-param-names
-  (lambda (params)
+(define extract-param-stats
+  (lambda (params should-extract-name)
     (cases params-list params
       (param-list (param-list)
-                  (map extract-single-param-name param-list))
-      (empty-params () '()))))
+                  (if should-extract-name
+                    (map extract-single-param-name param-list)
+                    (map extract-single-param-type param-list)
+                      )
+                  )
+      (empty-params () '())
+      )
+    ))
 
 (define extract-single-param-name
   (lambda (par)
-    (cases param par
-      (argvar (type-spec id) id)
-      (argarray (type-spec id) id))))
+      (cases param par
+        (argvar (type-spec id) id)
+        (argarray (type-spec id) id))    
+    )
+  )
+
+(define extract-single-param-type
+  (lambda (par)
+      (cases param par
+        (argvar (type-spec id) type-spec)
+        (argarray (type-spec id) type-spec))    
+    )
+  )
 
 (define find-and-call-main
   (lambda (env)
@@ -410,7 +473,7 @@
                                         (if (pair? result)
                                              (loop (cdr result))  ; Use updated environment
                                             (loop curr-env)))
-                                      (num-val 0)))))
+                                      (int-val 0)))))
                     ; (loop)))
                     (loop env)))
       (return-stmt (exp)
@@ -418,20 +481,20 @@
                   (raise (make-return-signal (value-of exp env (get-line-from exp)))))
       (empty-return ()
                     ; (num-val 0))
-                    (raise (make-return-signal (num-val 0))))
+                    (raise (make-return-signal (int-val 0))))
       (expression-stmt (exp)
                        (value-of exp env (get-line-from exp)))
       (empty-exp ()
-                 (num-val 0))
+                 (int-val 0))
       (var-dec-stmt (var-decl)
                     (let ((new-env (value-of-var-declaration var-decl env)))
                        ;; Return both value and updated environment
-                       (cons (num-val 0) new-env))))))
+                       (cons (int-val 0) new-env))))))
 
 (define value-of-statement-list
   (lambda (stmt-list env)
     (if (null? stmt-list)
-        (num-val 0)
+        (int-val 0)
         (if (null? (cdr stmt-list))
             ;; Last statement
             (let ((result (value-of-statement (car stmt-list) env)))
@@ -453,8 +516,8 @@
 (define value-of
   (lambda (exp env line)
     (cases expression exp
-      (const-exp (num) (num-val num))
-      (const-float-exp (num) (num-val num))
+      (const-exp (num) (int-val num))
+      (const-float-exp (num) (float-val num))
       (const-string-exp (str) (string-val str))
       (const-bool-exp (bool) (bool-val bool))
       (var-exp (var) (deref (apply-env env var line)))
@@ -471,7 +534,7 @@
                      (let ((array-ref (apply-env env var line))
                            (idx-val (value-of index env line)))
                        (let ((array (expval->array (deref array-ref) line))
-                             (idx (expval->num idx-val line)))
+                             (idx (expval->int idx-val line)))
                          (if (or (< idx 0) (>= idx (vector-length array)))
                              (raise-runtime-error "IndexError" line 
                                                   (format "Array index ~a out of bounds for array of size ~a" 
@@ -481,20 +544,41 @@
                   (let ((val (value-of exp env line)))
                     (cases variable var
                       (simple-var (id)
+                        (let ((var-ref (apply-env env id line)))
+                          (cases reference var-ref
+                            (a-ref (pos type-name) 
+                              (if (check-type-compatibility type-name (get-type val))
                                   (setref! (apply-env env id line) val)
+                                  (raise-runtime-error "TypeError" 0 
+                                    (format "Expected ~a, got ~a" type-name (get-type val)))
+                                  )))
+                          ; (setref! (apply-env env id line) val)
+                        )
                                   val)
                       (array-var (id index)
                                  (let ((array-ref (apply-env env id line))
                                        (idx-val (value-of index env line)))
-                                   (let ((array (expval->array (deref array-ref) line))
-                                         (idx (expval->num idx-val line)))
-                                     (if (or (< idx 0) (>= idx (vector-length array)))
-                                         (raise-runtime-error "IndexError" line 
-                                                              (format "Array index ~a out of bounds for array of size ~a" 
-                                                                      idx (vector-length array)))
-                                         (begin
-                                           (vector-set! array idx val)
-                                           val))))))))
+                                   (let ((array-ref-dereffed (deref array-ref)))
+                                    (let ((array (expval->array array-ref-dereffed line))
+                                          (idx (expval->int idx-val line)))
+                                      (if (or (< idx 0) (>= idx (vector-length array)))
+                                          (raise-runtime-error "IndexError" line 
+                                            (format "Array index ~a out of bounds for array of size ~a" 
+                                                    idx (vector-length array)))
+                                          (cases expval array-ref-dereffed
+                                            (array-val (pos type-name) 
+                                              ; (if (equal? type-name (get-type val))
+                                              (if (check-type-compatibility type-name (get-type val))
+                                              (begin
+                                                (vector-set! array idx val) 
+                                                val)
+                                              (raise-runtime-error "TypeError" 0 
+                                                (format "Expected ~a, got ~a" type-name (get-type val)))
+                                                  ))
+                                            (else (raise-runtime-error "ReferenceError" 0 "Couldn't deref array."))
+                                            )
+                                          )))))))
+                                     )
       (binary-op-exp (op exp1 exp2)
                      (let ((val1 (value-of exp1 env line))
                            (val2 (value-of exp2 env line)))
@@ -519,16 +603,17 @@
 
 (define (apply-binary-op op v1 v2 line)
   (cases expval v1
-    (num-val (n1)
+    (int-val (n1)
       (cases expval v2
-        (num-val (n2)
+        
+        (float-val (n2)
           (case op
-            [(+) (num-val (+ n1 n2))]
-            [(-) (num-val (- n1 n2))]
-            [(*) (num-val (* n1 n2))]
+            [(+) (float-val (+ n1 n2))]
+            [(-) (float-val (- n1 n2))]
+            [(*) (float-val (* n1 n2))]
             [(/) (if (= n2 0)
                      (raise-runtime-error "DivideByZero" line "Division by zero")
-                     (num-val (/ n1 n2)))]
+                     (float-val (/ n1 n2)))]
             [(<)  (bool-val (< n1 n2))]
             [(<=) (bool-val (<= n1 n2))]
             [(>)  (bool-val (> n1 n2))]
@@ -537,6 +622,64 @@
             [(!=) (bool-val (not (= n1 n2)))]
             [else (raise-runtime-error "TypeError" line
                       (format "Unsupported op ~a on numbers" op))]))
+        (int-val (n2)
+          (case op
+            [(+) (int-val (+ n1 n2))]
+            [(-) (int-val (- n1 n2))]
+            [(*) (int-val (* n1 n2))]
+            [(/) (if (= n2 0)
+                      (raise-runtime-error "DivideByZero" line "Division by zero")
+                      (float-val (/ n1 n2)))]
+            [(<)  (bool-val (< n1 n2))]
+            [(<=) (bool-val (<= n1 n2))]
+            [(>)  (bool-val (> n1 n2))]
+            [(>=) (bool-val (>= n1 n2))]
+            [(==) (bool-val (= n1 n2))]
+            [(!=) (bool-val (not (= n1 n2)))]
+            [else (raise-runtime-error "TypeError" line
+                                        (format "Unsupported op ~a on numbers" op))])
+
+                 )
+        [else (raise-runtime-error "TypeError" line
+                 (format "Mismatched types: number ~a and ~a" n1 v2))]))
+    
+    (float-val (n1)
+      (cases expval v2
+        
+        (float-val (n2)
+          (case op
+            [(+) (float-val (+ n1 n2))]
+            [(-) (float-val (- n1 n2))]
+            [(*) (float-val (* n1 n2))]
+            [(/) (if (= n2 0)
+                     (raise-runtime-error "DivideByZero" line "Division by zero")
+                     (float-val (/ n1 n2)))]
+            [(<)  (bool-val (< n1 n2))]
+            [(<=) (bool-val (<= n1 n2))]
+            [(>)  (bool-val (> n1 n2))]
+            [(>=) (bool-val (>= n1 n2))]
+            [(==) (bool-val (= n1 n2))]
+            [(!=) (bool-val (not (= n1 n2)))]
+            [else (raise-runtime-error "TypeError" line
+                      (format "Unsupported op ~a on numbers" op))]))
+        (int-val (n2)
+          (case op
+            [(+) (float-val (+ n1 n2))]
+            [(-) (float-val (- n1 n2))]
+            [(*) (float-val (* n1 n2))]
+            [(/) (if (= n2 0)
+                      (raise-runtime-error "DivideByZero" line "Division by zero")
+                      (float-val (/ n1 n2)))]
+            [(<)  (bool-val (< n1 n2))]
+            [(<=) (bool-val (<= n1 n2))]
+            [(>)  (bool-val (> n1 n2))]
+            [(>=) (bool-val (>= n1 n2))]
+            [(==) (bool-val (= n1 n2))]
+            [(!=) (bool-val (not (= n1 n2)))]
+            [else (raise-runtime-error "TypeError" line
+                                        (format "Unsupported op ~a on numbers" op))])
+                 
+                 )
         [else (raise-runtime-error "TypeError" line
                  (format "Mismatched types: number ~a and ~a" n1 v2))]))
 
@@ -575,7 +718,11 @@
 (define apply-unary-op
   (lambda (op val line)
     (case op
-      ((-) (num-val (- (expval->num val line))))
+      ((-) (cases expval val
+             (int-val (num) (- (expval->int val line)))
+             (float-val (num) (- (expval->float val line)))
+             (else (raise-runtime-error "TypeError" line (format "Using minus for non-number types.")))
+             ))
       ((not) (bool-val (not (expval->bool val line))))
       (else (raise-runtime-error "OperatorError" line (format "Unknown unary operator: ~s" op))))))
 
@@ -586,24 +733,46 @@
 (define apply-procedure
   (lambda (proc1 args env line)
     (cases proc proc1
-      (procedure (vars body saved-env)
+      (procedure (proc-name vars vars-types body saved-env)
                  (if (not (= (length vars) (length args)))
                      (raise-runtime-error "ArityError" line 
                                           (format "Function expects ~a arguments but got ~a" 
                                                   (length vars) (length args)))
-                     (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                       (with-handlers ([return-signal?
-                               (lambda (rs) (return-signal-value rs))])
-                         (value-of-statement body new-env)))))
-      (rec-procedure (name vars body saved-env)
+                     (if (check-procedure-args-types args vars-types 0)
+                      (let ((new-env (extend-env* vars (map newref args) saved-env)))
+                        (with-handlers ([return-signal?
+                                (lambda (rs) (return-signal-value rs))])
+                          (value-of-statement body new-env)))
+                      (raise-runtime-error "TypeError" 0
+                        (format "In calling function ~a, one of the arguments has wrong type." proc-name) )
+                      )
+                     ))
+      (rec-procedure (name vars vars-types body saved-env)
                      (if (not (= (length vars) (length args)))
                          (raise-runtime-error "ArityError" line 
                                               (format "Function expects ~a arguments but got ~a" 
                                                       (length vars) (length args)))
-                         (let ((new-env (extend-env* vars (map newref args) saved-env)))
-                           (with-handlers ([return-signal?
-                               (lambda (rs) (return-signal-value rs))])
-                             (value-of-statement body new-env))))))))    
+                         (if (check-procedure-args-types args vars-types 0)
+                          (let ((new-env (extend-env* vars (map newref args) saved-env)))
+                            (with-handlers ([return-signal?
+                                (lambda (rs) (return-signal-value rs))])
+                              (value-of-statement body new-env)))
+                          (raise-runtime-error "TypeError" 0
+                            (format "In calling function ~a, one of the arguments has wrong type." name) )
+                             )
+                         )))))
+
+(define check-procedure-args-types
+  (lambda (args fun-types ctr)
+    (if (equal? ctr (length args)) #t
+        (if (equal? (get-type (list-ref args ctr))
+                    (get-type-name-from-type-spec (list-ref fun-types ctr)))
+            (check-procedure-args-types args fun-types (+ ctr 1))
+            #f
+            )
+        )
+    )
+  )
 
 (define extend-env*
   (lambda (vars vals env)
@@ -633,7 +802,8 @@
 (define format-arg
   (lambda (val line)
     (cases expval val
-      (num-val (n) (number->string n))
+      (int-val (n) (number->string n))
+      (float-val (n) (number->string n))
       (bool-val (b) (if b "true" "false"))
       (string-val (s) s)
       (else (raise-runtime-error "TypeError" line "Cannot format value for printing")))))
@@ -689,7 +859,7 @@
   (var-dec-stmt (var-decl var-declaration?)))
 
 (define-datatype expression expression?
-  (const-exp (num number?))
+  (const-exp (num integer?))
   (const-float-exp (num number?))
   (const-string-exp (str string?))
   (const-bool-exp (bool boolean?))
@@ -819,7 +989,8 @@
 ;; Convert expressions
 (define (convert-expression exp)
   (match exp
-    [(? number? n) (const-exp n)]
+    [(? integer? n) (const-exp n)]
+    [(? number? n) (const-float-exp n)]
     [(? string? s) (const-string-exp s)]
     [(list 'True) (const-bool-exp #t)]
     [(list 'False) (const-bool-exp #f)]
