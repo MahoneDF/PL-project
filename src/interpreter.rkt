@@ -836,7 +836,7 @@
                                         return-val
                                         (raise-runtime-error
                                           "TypeError" line
-                                          (format "function ~s should return ~s but instead has returned ~s"
+                                          (format "recursive function ~s should return ~s but instead has returned ~s"
                                                   name return-type return-val)))))])
                           ;; In case of no return-signal (like empty statement)
                           (let ((return-val (value-of-statement body new-env)))
@@ -844,7 +844,7 @@
                                    return-val
                                    (raise-runtime-error
                                      "TypeError" line
-                                     (format "function ~s should return ~s but instead has returned ~s"
+                                     (format "recursive function ~s should return ~s but instead has returned ~s"
                                        name return-type return-val))))))))))
 
 ; (define check-procedure-args-types
