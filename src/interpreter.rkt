@@ -36,6 +36,7 @@
    (proc-names (list-of symbol?))
    (b-vars (list-of(list-of symbol?)))
    (b-types (list-of (list-of symbol?)))
+   (return-types (list-of symbol?))      
    (proc-bodies (list-of  statement?))
    (saved-env environment?)))
 
@@ -62,6 +63,7 @@
    (bvars (list-of symbol?))
    (btypes (list-of symbol?))
   ;  (body expression?)
+   (return-type symbol?) 
    (body statement?)
    (env environment?))
   
@@ -69,6 +71,7 @@
    (proc-name symbol?)
    (bvars (list-of symbol?))
    (btypes (list-of symbol?))
+   (return-type symbol?) 
    (body statement?)
    (env environment?)
    ))
@@ -176,7 +179,7 @@
                   (if (eqv? search-sym var)
                       val
                       (apply-env saved-env search-sym line)))
-      (extend-env-recursively (p-names b-vars b-types p-bodies saved-env)
+      (extend-env-recursively (p-names b-vars b-types return-types p-bodies saved-env) ;;;;;;;;;;;;;;;;;;;;;;;;;
                               (let ((n (location search-sym p-names)))
                                 (if n
                                     (newref
@@ -185,6 +188,7 @@
                                        (list-ref p-names n)
                                        (list-ref b-vars n)
                                        (list-ref b-types n)
+                                       (list-ref return-types n) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                        (list-ref p-bodies n)
                                        env)))
                                     (apply-env saved-env search-sym line)))
@@ -382,12 +386,13 @@
                       (list id)
                       (list param-names)
                       (list param-types)
+                      (list type-spec)
                       (list body)
                       env))
                    (let ((param-names (extract-param-stats params #t))
                          (param-types (extract-param-stats params #f)))
                      (extend-env id
-                                 (newref (proc-val (procedure id param-names param-types body env)))
+                                 (newref (proc-val (procedure id param-names param-types type-spec body env)))
                                  env)
                      ))))))
 
@@ -487,7 +492,7 @@
   (lambda (env)
     (let ((main-proc-ref (apply-env env 'main 0)))
       (let ((main-proc (expval->proc (deref main-proc-ref) 0)))
-        (apply-procedure main-proc '() env 0)))))
+        (apply-procedure main-proc '() env 'int 0))))) 
 
 ;; =============================================================================
 ;; STATEMENT EVALUATION
@@ -645,20 +650,20 @@
                 (let ((proc-val-exp (value-of rator env line)))
                   (let ((proc1 (expval->proc proc-val-exp line)))
                     (cases proc proc1
-                      (procedure (proc-name vars vars-types body saved-env)
+                      (procedure (proc-name vars vars-types return-type body saved-env)
                         (if (not (= (length vars) (length rands)))
                             (raise-runtime-error "ArityError" line 
                               (format "Function expects ~a arguments but got ~a" 
                                       (length vars) (length rands)))
-                            (let ((thunk-args (map (lambda (rand type) (a-thunk rand env type proc-name)) rands vars-types)))
-                              (apply-procedure proc1 thunk-args env line))))
-                      (rec-procedure (name vars vars-types body saved-env)
+                            (let ((thunk-args (map (lambda (rand type) (a-thunk rand env type proc-name)) rands vars-types))) 
+                              (apply-procedure proc1 thunk-args env return-type line)))) 
+                      (rec-procedure (name vars vars-types return-type body saved-env) 
                         (if (not (= (length vars) (length rands)))
                             (raise-runtime-error "ArityError" line 
                               (format "Function expects ~a arguments but got ~a" 
                                       (length vars) (length rands)))
                             (let ((thunk-args (map (lambda (rand type) (a-thunk rand env type name)) rands vars-types)))
-                              (apply-procedure proc1 thunk-args env line))))))))
+                              (apply-procedure proc1 thunk-args env return-type line)))))))) 
       (print-exp (format-str args)
                  (let ((str (expval->string (value-of format-str env line) line))
                        (arg-vals (map (lambda (arg) (value-of arg env line)) args)))
@@ -799,18 +804,48 @@
 ;; =============================================================================
 
 (define apply-procedure
-  (lambda (proc1 args env line)
+  (lambda (proc1 args env return-type line)
     (cases proc proc1
-      (procedure (proc-name vars vars-types body saved-env)
+      (procedure (proc-name vars vars-types return-type body saved-env)
                       (let ((new-env (extend-env* vars (map newref-with-type args vars-types) saved-env)))
                         (with-handlers ([return-signal?
-                                (lambda (rs) (return-signal-value rs))])
-                          (value-of-statement body new-env))))
-      (rec-procedure (name vars vars-types body saved-env)
+                                (lambda (rs)
+                                  (let ((return-val (return-signal-value rs)))
+                                    (if (equal? (get-type return-val)
+                                                (get-type-name-from-type-spec return-type))
+                                        return-val
+                                        (raise-runtime-error
+                                          "TypeError" line
+                                          (format "function ~s should return ~s but instead has returned ~s"
+                                                  proc-name return-type return-val)))))])
+                          ;; In case of no return-signal (like empty statement)
+                          (let ((return-val (value-of-statement body new-env)))
+                               (if (equal? (get-type return-val) (get-type-name-from-type-spec return-type))
+                                   return-val
+                                   (raise-runtime-error
+                                     "TypeError" line
+                                     (format "function ~s should return ~s but instead has returned ~s"
+                                             proc-name return-type return-val)))))))
+      (rec-procedure (name vars vars-types return-type body saved-env)
                       (let ((new-env (extend-env* vars (map newref-with-type args vars-types) saved-env)))
                         (with-handlers ([return-signal?
-                                (lambda (rs) (return-signal-value rs))])
-                          (value-of-statement body new-env)))))))
+                                (lambda (rs)
+                                  (let ((return-val (return-signal-value rs)))
+                                    (if (equal? (get-type return-val)
+                                                (get-type-name-from-type-spec return-type))
+                                        return-val
+                                        (raise-runtime-error
+                                          "TypeError" line
+                                          (format "recursive function ~s should return ~s but instead has returned ~s"
+                                                  name return-type return-val)))))])
+                          ;; In case of no return-signal (like empty statement)
+                          (let ((return-val (value-of-statement body new-env)))
+                               (if (equal? (get-type return-val) (get-type-name-from-type-spec return-type))
+                                   return-val
+                                   (raise-runtime-error
+                                     "TypeError" line
+                                     (format "recursive function ~s should return ~s but instead has returned ~s"
+                                       name return-type return-val))))))))))
 
 ; (define check-procedure-args-types
 ;   (lambda (args fun-types ctr)
