@@ -311,9 +311,9 @@ int process_array(int arr[], int size) {
 }
 
 int main() {
-    int len;
-    len = 3;
-    int values[len];
+    int lent;
+    lent = 3;
+    int values[lent];
     values[0] = 10;
     values[1] = 20;
     values[2] = 30;
@@ -326,8 +326,8 @@ int main() {
 
 (define return_test "
 int main() {
-    int len;
-    len = 3;
+    int lent;
+    lent = 3;
     return 4;
     print(\"sds\");
     return 5;
@@ -792,9 +792,9 @@ int main(){
 }
 ")
 
-(printf ">>>>>>>>>>> P2:\n")
-(run (do-parse p2))
-(newline)
+; (printf ">>>>>>>>>>> P2:\n")
+; (run (do-parse p2))
+; (newline)
 
 (define p3 "
 int main(){
@@ -918,4 +918,77 @@ int main(){
 
 (printf ">>>>>>>>>>> P3:\n")
 (run (do-parse p3))
+(newline)
+
+(define p4 "
+bool isValid(string date) {
+    bool valid;
+    valid = True;
+    if (len(date) != 8) { return False;}
+    else {
+        string M1;
+        string M2;
+        M1 = date[4];
+        M2 = date[5];
+        if (M1 == \"0\") {
+            valid = valid && ((M2 == \"9\") || (M2 == \"1\") || (M2 == \"2\") || (M2 == \"3\") || (M2 == \"4\") || (M2 == \"5\") || (M2 == \"6\") || (M2 == \"7\") || (M2 == \"8\"));
+        } else {
+            if (M1 == \"1\") {
+                valid = valid && ((M2 == \"0\") || (M2 == \"1\") || (M2 == \"2\"));
+            } else { return False; }
+        }
+        string D1;
+        string D2;
+        D1 = date[6];
+        D2 = date[7];
+        if (D1 == \"0\") {
+            valid = valid && ((D2 == \"9\") || (D2 == \"1\") || (D2 == \"2\") || (D2 == \"3\") || (D2 == \"4\") || (D2 == \"5\") || (D2 == \"6\") || (D2 == \"7\") || (D2 == \"8\"));            
+        } else {
+            if (D1 == \"1\" || D1 == \"2\") {
+                valid = valid && ((D2 == \"0\") || (D2 == \"9\") || (D2 == \"1\") || (D2 == \"2\") || (D2 == \"3\") || (D2 == \"4\") || (D2 == \"5\") || (D2 == \"6\") || (D2 == \"7\") || (D2 == \"8\"));                            
+            }
+            else {
+                if (D1 == \"3\") {
+                    valid = valid && ((D2 == \"0\") || (D2 == \"1\"));
+                } else {
+                    return False;
+                }
+            }
+        }
+        return valid;
+    }
+}
+
+int main () {
+    string d;
+    d = \"020250112\";
+    print(\"~x\" isValid(d));
+    return;
+}
+")
+
+(printf ">>>>>>>>>>> P4:\n")
+(run (do-parse p4))
+(newline)
+
+(define char-test "
+int main() {
+    string s;
+    s = \"sdshfjskdj\";
+    print(\"~x\" s[3]);
+    string r;
+    r = \"faghj\";
+    r[0] = s[3];
+    print(\"~x\" r);
+    print(\"~x\" s == r);
+    print(\"~x\" len(r));
+    print(\"~x\" len(r[3]));
+    int arr[4];
+    print(\"~x\" len(arr));
+    print(\"~x\" len(3));
+    return;
+}
+")
+
+(run (do-parse char-test))
 (newline)

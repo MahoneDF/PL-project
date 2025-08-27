@@ -119,7 +119,8 @@
             [(STR) $1])
         (call
             [(ID LEFTPAR args RIGHTPAR) (list $1 $3)]
-            [(PRINT LEFTPAR print-ful-args RIGHTPAR) (list 'print $3)])
+            [(PRINT LEFTPAR print-ful-args RIGHTPAR) (list 'print $3)]
+            [(LEN LEFTPAR expression RIGHTPAR) (list 'len $3)])
         (print-ful-args
             [(STR args) (list 'string $1 $2)])
         (args

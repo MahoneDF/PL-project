@@ -6,7 +6,7 @@
 (provide (all-defined-out))
 
 (define-tokens value-tokens (STR NUM FNUM ID))
-(define-empty-tokens empty-tokens (COMMENT EOF INT FLOAT STRING BOOL PRINT IF ELSE COMMA SEMICOLON PASS BREAK CONTINUE ASSIGN LEFTPAR RIGHTPAR LEFTBR RIGHTBR WHILE OR AND EQ NEQ GT LT GEQ LEQ SUM MINUS MUL DIV TRUE FALSE RETURN LEFTVILI RIGHTVILI))
+(define-empty-tokens empty-tokens (COMMENT EOF INT FLOAT STRING BOOL PRINT IF ELSE COMMA SEMICOLON PASS BREAK CONTINUE LEN ASSIGN LEFTPAR RIGHTPAR LEFTBR RIGHTBR WHILE OR AND EQ NEQ GT LT GEQ LEQ SUM MINUS MUL DIV TRUE FALSE RETURN LEFTVILI RIGHTVILI))
 
 (define our-lexer (lexer
     [whitespace (our-lexer input-port)]
@@ -23,6 +23,7 @@
     ["pass" (token-PASS)]
     ["break" (token-BREAK)]
     ["continue" (token-CONTINUE)]
+    ["len" (token-LEN)]
     ["=" (token-ASSIGN)]
     ["(" (token-LEFTPAR)]
     [")" (token-RIGHTPAR)]

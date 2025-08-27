@@ -273,6 +273,7 @@
   (lambda (v line)
     (cases expval v
       (string-val (str) str)  
+      (char-val (ch) ch)
       (else (raise-runtime-error "TypeError" line "Expected a string")))))
 
 (define expval->array
@@ -311,12 +312,14 @@
       (array-val (arr type-name) type-name)
       (proc-val (proc) "proc-val")
       (thunk-val (th) "thunk-val")
+      (char-val (ch) "char-val")
       (else "undefined"))))
 
 (define check-type-compatibility
   (lambda (type1 type2)
     (if (equal? type1 type2) #t
-        (if (and (equal? type1 "float-val") (equal? type2 "int-val")) #t #f))
+        (if (and (equal? type1 "float-val") (equal? type2 "int-val")) #t 
+            (if (and (equal? type1 "string-val") (equal? type2 "char-val")) #t #f)))
     ))
 
 (define get-type-name-from-type-spec
@@ -432,7 +435,7 @@
                   (or (does-exp-call-fun-id test fun-id) (does-stmnt-call-fun-id body fun-id)))
       (return-stmt (exp) (does-exp-call-fun-id exp fun-id))
       (expression-stmt (exp) (does-exp-call-fun-id exp fun-id))
-      (else #f))))
+      (else #f))))expval->string
 
 (define does-exp-call-fun-id
   (lambda (exp fun-id)
@@ -447,6 +450,7 @@
                                   (does-expLst-call-fun-id rands fun-id)))
       (print-exp (format args) (or (does-exp-call-fun-id format fun-id)
                                    (does-expLst-call-fun-id args fun-id)))
+      (len-exp (exp1) (does-exp-call-fun-id exp1 fun-id))
       (else #f))
     ))
 
@@ -584,7 +588,10 @@
                           (cases reference var-ref
                             (a-ref (pos type-name) 
                               (if (check-type-compatibility type-name (get-type val))
-                                  (setref! (apply-env env id line) val)
+                                  (cases expval val
+                                    (char-val (ch) (setref! (apply-env env id line) (string-val (string ch))))
+                                    (else (setref! (apply-env env id line) val)))
+                                  ; (setref! (apply-env env id line) val)
                                   (raise-runtime-error "TypeError" 0 
                                     (format "Expected ~a, got ~a" type-name (get-type val)))
                                   ))))
@@ -610,11 +617,15 @@
                                                 (format "Expected ~a, got ~a" type-name (get-type val)))
                                                   ))
                                             (string-val (str)
-                                              (if (equal? "string-val" (get-type val))
+                                              (if (or (equal? "string-val" (get-type val)) (equal? "char-val" (get-type val)))
                                                   (begin
-                                                    (vector-set! array idx (char-val (string-ref (expval->string val line) 0)))
+                                                    (if (equal? "string-val" (get-type val))
+                                                        (vector-set! array idx (char-val (string-ref (expval->string val line) 0)))
+                                                        (vector-set! array idx val))
                                                     (setref! array-ref (string-val (list->string (map (lambda (ch) (cases expval ch (char-val (c) c) (else ch))) (vector->list array)))))
-                                                    (string-ref (expval->string val line) 0))
+                                                    (if (equal? "string-val" (get-type val))
+                                                        (string-ref (expval->string val line) 0)
+                                                        val))
                                                   (raise-runtime-error "TypeError" 0 
                                                     (format "Expected string-val, got ~a" (get-type val)))))
                                             (else (raise-runtime-error "ReferenceError" 0 "Couldn't deref array."))
@@ -668,7 +679,12 @@
                  (let ((str (expval->string (value-of format-str env line) line))
                        (arg-vals (map (lambda (arg) (value-of arg env line)) args)))
                    (apply-print str arg-vals line)
-                   (string-val ""))))))  
+                   (string-val "")))
+      (len-exp (exp)
+               (let ((val (value-of exp env line)))
+                 (apply-len val line)
+                 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                 )))))  
 
 ;; =============================================================================
 ;; OPERATOR APPLICATION
@@ -909,6 +925,18 @@
       (helper 0))))
 
 ;; =============================================================================
+;; LEN FUNCTION
+;; =============================================================================
+
+(define apply-len
+  (lambda (val line)
+    (cases expval val
+      (string-val (s) (int-val (string-length s)))
+      (char-val (c) (int-val 1))
+      (array-val (arr type) (int-val (vector-length arr)))
+      (else (raise-runtime-error "TypeError" line (format "cannot apply len on this type ~s" (get-type val)))))))
+
+;; =============================================================================
 ;; GRAMMAR DEFINITIONS (matching parser output)
 ;; =============================================================================
 
@@ -955,7 +983,8 @@
   (binary-op-exp (op symbol?) (exp1 expression?) (exp2 expression?))
   (unary-op-exp (op symbol?) (exp expression?))
   (call-exp (rator expression?) (rands (list-of expression?)))
-  (print-exp (format-str expression?) (args (list-of expression?))))
+  (print-exp (format-str expression?) (args (list-of expression?)))
+  (len-exp (exp expression?)))
 
 (define-datatype variable variable?
   (simple-var (id symbol?))
@@ -1061,6 +1090,8 @@
     [(list 'call (list 'print (list 'string fmt args)))
      (print-exp (const-string-exp fmt)
                 (map convert-expression args))]
+    [(list 'call (list 'len exp))
+     (len-exp (convert-expression exp))]
     [(list 'call (list id args))
      (call-exp (var-exp id) (map convert-expression args))]
     [(list var '= rhs)
