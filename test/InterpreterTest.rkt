@@ -430,6 +430,61 @@ int main() {
 }
 ")
 
+(define double-declare "
+int main () {
+    int n;
+    n = 9;
+    int n;
+    n = 7;
+    return n;
+}
+")
+
+(define fnuction-return-type "
+int f (int n) {
+    int m;
+    m = n + 1;
+    return \"sdfa\";
+}
+
+int main () {
+    string s;
+    s = f(3);
+    print(\"~x\" s);
+    return 0;
+}
+")
+
+(define fnuction-empty-return-type "
+string f (int n) {}
+int main () {
+    string s;
+    s = f(3);
+    print(\"~x\" s);
+    return 0;
+}
+")
+
+(define rec-fnuction-empty-return-type "
+int f (int n) {
+    if (n == 1) {
+        return 1;
+    }
+    else {
+        int k;
+        k = n * f(n - 1);
+        return \"abcd\";
+    }
+}
+int main () {
+    string s;
+    int t;
+    t = f(3);
+    print(\"~x\" s);
+    return 0;
+}
+")
+
 ;; Run the tests
 (run (do-parse chechkk))
 (newline)
@@ -477,6 +532,18 @@ int main() {
 (newline)
 
 (run (do-parse int-float-test))
+(newline)
+
+(run (do-parse double-declare))
+(newline)
+
+(run (do-parse fnuction-return-type))
+(newline)
+
+(run (do-parse fnuction-empty-return-type))
+(newline)
+
+(run (do-parse rec-fnuction-empty-return-type))
 (newline)
 
 (printf "Testing type error:\n")
