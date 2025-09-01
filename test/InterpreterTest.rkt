@@ -649,9 +649,9 @@ int power(int a, int n){
 
 int main(){
     int n;
-    n = 123310;
+    n = 12200;
     if (n < 0){
-        print(\"you should provide a non-negative nuⅿber!\n\");
+        print(\"you should provide a non-negative number!\n\");
         return 0;
     }
     else{
@@ -799,13 +799,13 @@ int main(){
 (define p3 "
 int main(){
     string board[36];
-    board[0] = \"-\";
+    board[0] = \"O\";
     board[1] = \"-\";
     board[2] = \"X\";
     board[3] = \"X\";
     board[4] = \"X\";
     board[5] = \"X\";
-    board[6] = \"O\";
+    board[6] = \"-\";
     board[7] = \"O\";
     board[8] = \"-\";
     board[9] = \"-\";
@@ -813,7 +813,7 @@ int main(){
     board[11] = \"-\";
     board[12] = \"O\";
     board[13] = \"-\";
-    board[14] = \"-\";
+    board[14] = \"O\";
     board[15] = \"-\";
     board[16] = \"-\";
     board[17] = \"-\";
@@ -841,8 +841,8 @@ int main(){
     int j;
     int x_win;
     x_win = 0;
-    int y_win;
-    y_win = 0;
+    int O_win;
+    O_win = 0;
     while(i < 3){
         j = 0;
         while (j < 6) {
@@ -852,7 +852,7 @@ int main(){
             }
 
             if (board[6*j + i] == \"O\" && board[6*j + i + 1] == \"O\" && board[6*j + i + 2] == \"O\" && board[6*j + i + 3] == \"O\"){
-                y_win = 1;
+                O_win = 1;
             }else{
             }
             j = j + 1;
@@ -870,7 +870,7 @@ int main(){
             }
 
             if (board[6*j + i] == \"O\" && board[6*j + i + 6] == \"O\" && board[6*j + i + 12] == \"O\" && board[6*j + i + 18] == \"O\"){
-                y_win = 1;
+                O_win = 1;
             }else{
             }
             i = i + 1;
@@ -888,7 +888,7 @@ int main(){
             }
 
             if (board[6*j + i] == \"O\" && board[6*j + i + 6 + 1] == \"O\" && board[6*j + i + 12 + 2] == \"O\" && board[6*j + i + 18 + 3] == \"O\"){
-                y_win = 1;
+                O_win = 1;
             }else{
             }
             i = i + 1;
@@ -896,19 +896,19 @@ int main(){
         j = j + 1;
     }
 
-    if (x_win == 1 && y_win == 1){
+    if (x_win == 1 && O_win == 1){
         print(\"Somebody Cheated!\");
     }else{
     }
-    if (x_win == 1 && y_win == 0){
+    if (x_win == 1 && O_win == 0){
         print(\"X wins!\");
     }else{
     }
-    if (x_win == 0 && y_win == 1){
-        print(\"Y wins!\");
+    if (x_win == 0 && O_win == 1){
+        print(\"O wins!\");
     }else{
     }
-    if (x_win == 0 && y_win == 0){
+    if (x_win == 0 && O_win == 0){
         print(\"Draw!\");
     }else{
     }
