@@ -827,8 +827,10 @@
                         (with-handlers ([return-signal?
                                 (lambda (rs)
                                   (let ((return-val (return-signal-value rs)))
-                                    (if (equal? (get-type return-val)
-                                                (get-type-name-from-type-spec return-type))
+                                    ; (if (equal? (get-type return-val)
+                                    ;             (get-type-name-from-type-spec return-type))
+                                    (if (check-type-compatibility (get-type-name-from-type-spec return-type) 
+                                                (get-type return-val))
                                         return-val
                                         (raise-runtime-error
                                           "TypeError" line
@@ -836,7 +838,8 @@
                                                   proc-name return-type return-val)))))])
                           ;; In case of no return-signal (like empty statement)
                           (let ((return-val (value-of-statement body new-env)))
-                               (if (equal? (get-type return-val) (get-type-name-from-type-spec return-type))
+                              ;  (if (equal? (get-type return-val) (get-type-name-from-type-spec return-type))
+                               (if (check-type-compatibility (get-type-name-from-type-spec return-type) (get-type return-val))
                                    return-val
                                    (raise-runtime-error
                                      "TypeError" line
@@ -847,8 +850,10 @@
                         (with-handlers ([return-signal?
                                 (lambda (rs)
                                   (let ((return-val (return-signal-value rs)))
-                                    (if (equal? (get-type return-val)
-                                                (get-type-name-from-type-spec return-type))
+                                    ; (if (equal? (get-type return-val)
+                                    ;             (get-type-name-from-type-spec return-type))
+                                    (if (check-type-compatibility (get-type-name-from-type-spec return-type)
+                                                (get-type return-val))
                                         return-val
                                         (raise-runtime-error
                                           "TypeError" line
@@ -856,7 +861,8 @@
                                                   name return-type return-val)))))])
                           ;; In case of no return-signal (like empty statement)
                           (let ((return-val (value-of-statement body new-env)))
-                               (if (equal? (get-type return-val) (get-type-name-from-type-spec return-type))
+                              ;  (if (equal? (get-type return-val) (get-type-name-from-type-spec return-type))
+                               (if (check-type-compatibility (get-type-name-from-type-spec return-type) (get-type return-val))
                                    return-val
                                    (raise-runtime-error
                                      "TypeError" line

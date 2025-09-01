@@ -447,8 +447,15 @@ int f (int n) {
     return \"sdfa\";
 }
 
+float g (int n) {
+    return 0;
+}
+
 int main () {
     string s;
+    int h;
+    h = g(4);
+    print(\"~x\" h);
     s = f(3);
     print(\"~x\" s);
     return 0;
