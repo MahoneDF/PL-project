@@ -448,15 +448,15 @@ int f (int n) {
 }
 
 float g (int n) {
-    return 0;
+    return 3;
 }
 
 int main () {
     string s;
-    int h;
+    float h;
     h = g(4);
     print(\"~x\" h);
-    s = f(3);
+    s = \"arty\";
     print(\"~x\" s);
     return 0;
 }
@@ -489,6 +489,23 @@ int main () {
     t = f(3);
     print(\"~x\" s);
     return 0;
+}
+")
+
+(define fun-scope "
+int k;
+
+int f (int n) {
+    return n + k;
+}
+
+int main() {
+    int m;
+    k = 71;
+    m = f(3);
+    k = 72;
+    m = f(3);
+    return m;
 }
 ")
 
@@ -551,6 +568,9 @@ int main () {
 (newline)
 
 (run (do-parse rec-fnuction-empty-return-type))
+(newline)
+
+(run (do-parse fun-scope))
 (newline)
 
 (printf "Testing type error:\n")
@@ -1160,6 +1180,7 @@ int main () {
     input[4] = \"20210101\";
     input[5] = \"20001231\";
     input[6] = \"20250618\";
+
 
     int n;
     n = len(input);

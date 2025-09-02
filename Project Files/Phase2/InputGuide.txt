@@ -1,0 +1,21 @@
+problem 1:
+The input is the variable named n at the beginning of the main function. For testing, just change its value.
+
+problem 2: 
+At the beginning of the main function, there are two arrays defined as a and b. They hold the input and you have to manually set their size and 
+each of their entries. The array named a corresponds to the first list, and the array named b corresponds to the second list (the one with binary representations).
+
+problem 3:
+The input is set at the beginning of the main function and is given as an array of strings of size 36 (instead of a 2D array of size 6).
+The variable for the input is named board, and you have to set each of its 36 entries manually.
+Note that entries 0 ot 5 correspond to the first row from left to right, entries 6 to 11 correspond to the second row, and so on.
+
+problem 4:
+At the beginning of main function, there is an array of strings named input.
+You have to set the size of this array and each of its strings manually.
+
+problem 5:
+There are 5 arrays that store students informations: stdId, names, sirNames, stdAvg, stdMentored
+The orientation is the same way as the example given in the doc.
+Each student information has to be hardcoded in them. Hardcoded as setting each entry one by one. An example (same one as doc) is provided in the main.
+Final answer is returned by findAnser function which gets the year as input.
