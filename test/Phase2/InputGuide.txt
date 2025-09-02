@@ -1,0 +1,5 @@
+problem 5:
+There are 5 arrays that store students informations: stdId, names, sirNames, stdAvg, stdMentored
+The orientation is the same way as the example given in the doc.
+Each student information has to be hardcoded in them. Hardcoded as setting each entry one by one. An example (same one as doc) is provided in the main.
+Final answer is returned by findAnser function which gets the year as input.

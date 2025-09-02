@@ -213,7 +213,7 @@
       (a-thunk (exp env type proc-name) 
         ;; evaluate in the captured environment
         (let ((val (value-of exp env (get-line-from exp))))
-          (if (equal? (get-type-name-from-type-spec type) (get-type val))
+          (if (check-type-compatibility (get-type-name-from-type-spec type) (get-type val))
             val
             (raise-runtime-error "TypeError" 0
                         (format "In calling function ~a, one of the arguments has wrong type." proc-name) )))))))
