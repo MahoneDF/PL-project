@@ -240,7 +240,7 @@
      (cases thunk v
        (a-thunk (exp th-env type proc-name)
          (let ((val (value-of exp th-env (get-line-from exp))))
-           (if (equal? (get-type-name-from-type-spec type) (get-type val))
+           (if (check-type-compatibility (get-type-name-from-type-spec type) (get-type val))
                val
                (raise-runtime-error "TypeError" 0
                         (format "In calling function ~a, one of the arguments has wrong type." proc-name) ))))))
